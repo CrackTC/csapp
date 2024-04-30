@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-typedef enum { MOV, PUSH, CALL, HALT } op_t;
+typedef enum { PUSH, POP, CALL, RET, MOV, MOVL, MOVQ, ADD, SUB, XOR, HALT, DBG } op_t;
 
 typedef enum {
   IMM = 1,
