@@ -30,7 +30,9 @@ void machine_run(machine_t *machine) {
     void *src = decoder_decode_od(machine->cpu->decoder, &inst.src);
     void *dst = decoder_decode_od(machine->cpu->decoder, &inst.dst);
 
-    executor_exec(machine->cpu->executor, inst.op, src, dst);
+    uint64_t mask = inst.src.reg1_mask | inst.dst.reg1_mask;
+
+    executor_exec(machine->cpu->executor, inst.op, src, dst, mask);
   }
 }
 

@@ -1,8 +1,22 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
-typedef enum { PUSH, POP, CALL, RET, MOV, MOVL, MOVQ, ADD, SUB, XOR, HALT, DBG } op_t;
+typedef enum {
+  PUSH,
+  POP,
+  CALL,
+  RET,
+  MOV,
+  MOVL,
+  MOVQ,
+  ADD,
+  SUB,
+  XOR,
+  HALT,
+  DBG
+} op_t;
 
 typedef enum {
   IMM = 1,
@@ -13,21 +27,22 @@ typedef enum {
 
   REG = REG1,
   MM_IMM = MM | IMM,
-  MM_REG = MM | REG,
-  MM_IMM_REG = MM | IMM | REG,
-  MM_REG1_REG2 = MM | REG1 | REG2,
-  MM_IMM_REG1_REG2 = MM | IMM | REG1 | REG2,
-  MM_REG2_SCAL = MM | REG2 | SCAL,
-  MM_IMM_REG2_SCAL = MM | IMM | REG2 | SCAL,
-  MM_REG1_REG2_SCAL = MM | REG1 | REG2 | SCAL,
-  MM_IMM_REG1_REG2_SCAL = MM | IMM | REG1 | REG2 | SCAL
+  MM_BASE = MM | REG,
+  MM_DISP_BASE = MM | IMM | REG,
+  MM_BASE_INDEX = MM | REG1 | REG2,
+  MM_DISP_BASE_INDEX = MM | IMM | REG1 | REG2,
+  MM_INDEX_SCALE = MM | REG2 | SCAL,
+  MM_DISP_INDEX_SCALE = MM | IMM | REG2 | SCAL,
+  MM_BASE_INDEX_SCALE = MM | REG1 | REG2 | SCAL,
+  MM_DISP_BASE_INDEX_SCALE = MM | IMM | REG1 | REG2 | SCAL
 } od_type_t;
 
 typedef struct {
   int64_t imm;
 
-  uint64_t *reg1;
-  uint64_t *reg2;
+  void *reg1;
+  uint64_t reg1_mask;
+  void *reg2;
 
   uint64_t scal;
 
