@@ -1,4 +1,5 @@
-#pragma once
+#ifndef REG_H
+#define REG_H
 
 #include <stdint.h> // IWYU pragma: export
 
@@ -44,3 +45,5 @@ typedef struct {
   QWORD_REG_NUMBER(14);
   QWORD_REG_NUMBER(15);
 } reg_t;
+
+#endif // REG_H

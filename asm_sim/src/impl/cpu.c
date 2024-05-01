@@ -1,22 +1,40 @@
 #include "cpu.h"
 #include "decoder.h"
 #include "executor.h"
-#include "machine.h"
+#include "mem.h"
 #include "mmu.h"
 #include "utils.h"
+#include <stddef.h>
 #include <stdlib.h>
 
-cpu_t *new_cpu(machine_t *machine) {
+static core_t *new_core(mmu_t *mmu) {
+  core_t *result = malloc(sizeof(core_t));
+  result->decoder = new_decoder(&result->regs, mmu);
+  result->executor = new_executor(&result->regs, mmu);
+  return result;
+}
+
+static void free_core(core_t *core) {
+  free_executor(core->executor);
+  free_decoder(core->decoder);
+  free(core);
+}
+
+cpu_t *new_cpu(mem_t *mem, size_t core_count) {
   cpu_t *result = malloc(sizeof(cpu_t));
-  result->mmu = new_mmu(machine);
-  result->decoder = new_decoder(result);
-  result->executor = new_executor(result);
+  result->mmu = new_mmu(mem);
+  result->cores = malloc(sizeof(core_t *) * core_count);
+  for (size_t i = 0; i < core_count; i++) {
+    result->cores[i] = new_core(result->mmu);
+  }
   return result;
 }
 
 void free_cpu(cpu_t *cpu) {
-  free_executor(cpu->executor);
-  free_decoder(cpu->decoder);
+  for (size_t i = 0; i < cpu->core_count; i++) {
+    free_core(cpu->cores[i]);
+  }
+  free(cpu->cores);
   free_mmu(cpu->mmu);
   free(cpu);
 }

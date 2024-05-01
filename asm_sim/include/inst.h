@@ -1,9 +1,10 @@
-#pragma once
+#ifndef INST_H
+#define INST_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum {
+typedef enum : unsigned {
   PUSH,
   POP,
   CALL,
@@ -18,12 +19,12 @@ typedef enum {
   DBG
 } op_t;
 
-typedef enum {
-  IMM = 1,
-  REG1 = 1 << 1,
-  REG2 = 1 << 2,
-  SCAL = 1 << 3,
-  MM = 1 << 4,
+typedef enum : unsigned {
+  IMM = 1U,
+  REG1 = 1U << 1U,
+  REG2 = 1U << 2U,
+  SCAL = 1U << 3U,
+  MM = 1U << 4U,
 
   REG = REG1,
   MM_IMM = MM | IMM,
@@ -56,3 +57,5 @@ typedef struct {
 
   const char *code;
 } inst_t;
+
+#endif // INST_H

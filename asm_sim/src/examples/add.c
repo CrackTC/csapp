@@ -4,7 +4,7 @@
 #include "utils.h"
 
 // clang-format off
-static inst_t insts[] = {
+static const inst_t insts[] = {
     // main
     [0] =
     {PUSH, PERCENT(rbp), .code = "push %rbp"},

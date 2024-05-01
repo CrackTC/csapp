@@ -1,57 +1,59 @@
-#pragma once
+#ifndef UTILS_H
+#define UTILS_H
 
 #define DEFINE_CLEANUP_FUNC(T)                                                 \
-  void free_##T##_ptr(T##_t **T) {                                             \
-    free_##T(*T);                                                              \
-    *T = (void *)0;                                                            \
+  void free_##T##_ptr(T##_t **(T)) {                                           \
+    free_##T(*(T));                                                            \
+    *(T) = (void *)0;                                                          \
   }
 
-#define _CLEANUP_(x) __attribute__((cleanup(x)))
+#define CLEANUP(x) __attribute__((cleanup(x)))
 
-#define _SIZE(M) sizeof(((reg_t *)0)->M)
-#define _OFFSET(M) offsetof(reg_t, M)
+#define SIZE(M) sizeof(((reg_t *)0)->M)
+#define OFFSET(M) offsetof(reg_t, M)
 
-#define _REG_MASK(R)                                                           \
-  (((1ull << (_SIZE(R) * 8 - 1)) - 1) | 1ull << (_SIZE(R) * 8 - 1))
+#define REG_MASK(R)                                                            \
+  (((1ull << (SIZE(R) * 8 - 1)) - 1) | 1ull << (SIZE(R) * 8 - 1))
 
 #define PERCENT(R)                                                             \
-  { .type = REG, .reg1_offset = _OFFSET(R), .reg1_mask = _REG_MASK(R) }
+  { .type = REG, .reg1_offset = OFFSET(R), .reg1_mask = REG_MASK(R) }
 #define DOLLAR(I)                                                              \
-  { .type = IMM, .imm = I }
+  { .type = IMM, .imm = (I) }
 
-#define _COMMA ,
-#define _EXPAND(MACRO, ...) MACRO(__VA_ARGS__)
-#define _THIRD(first, second, third, ...) third
+#define COMMA ,
+#define EXPAND(MACRO, ...) MACRO(__VA_ARGS__)
+#define THIRD(first, second, third, ...) third
 
-#define _OPTIONAL_ARG(...) , ##__VA_ARGS__
+#define OPTIONAL_ARG(...) , ##__VA_ARGS__
 
-#define _OPTIONAL_HELPER(THING, ...) _THIRD(first, ##__VA_ARGS__, THING, )
-#define _OPTIONAL(THING, COND)                                                 \
-  _EXPAND(_OPTIONAL_HELPER, THING _OPTIONAL_ARG(COND))
+#define OPTIONAL_HELPER(THING, ...) THIRD(first, ##__VA_ARGS__, THING, )
+#define OPTIONAL(THING, COND) EXPAND(OPTIONAL_HELPER, THING OPTIONAL_ARG(COND))
 
-#define _OPTIONAL_COMMA_HELPER(...) _THIRD(first, ##__VA_ARGS__, _COMMA, )
-#define _OPTIONAL_COMMA(COND) _OPTIONAL_COMMA_HELPER(COND)
+#define OPTIONAL_COMMA_HELPER(...) THIRD(first, ##__VA_ARGS__, COMMA, )
+#define OPTIONAL_COMMA(COND) OPTIONAL_COMMA_HELPER(COND)
 
-#define _MM_TYPE_CONCAT(DISP, BASE, INDEX, SCALE) MM##DISP##BASE##INDEX##SCALE
+#define MM_TYPE_CONCAT(DISP, BASE, INDEX, SCALE) MM##DISP##BASE##INDEX##SCALE
 
-#define _MM_TYPE(DISP, BASE, INDEX, SCALE)                                     \
-  _EXPAND(_MM_TYPE_CONCAT, _OPTIONAL(_DISP, DISP), _OPTIONAL(_BASE, BASE),     \
-          _OPTIONAL(_INDEX, INDEX), _OPTIONAL(_SCALE, SCALE))
+#define MM_TYPE(DISP, BASE, INDEX, SCALE)                                      \
+  EXPAND(MM_TYPE_CONCAT, OPTIONAL(_DISP, DISP), OPTIONAL(_BASE, BASE),         \
+         OPTIONAL(_INDEX, INDEX), OPTIONAL(_SCALE, SCALE))
 
 // clang-format off
-#define _EFFECTIVE_HELPER(DISP, BASE, INDEX, SCALE, ...)                       \
+#define EFFECTIVE_HELPER(DISP, BASE, INDEX, SCALE, ...)                        \
   {                                                                            \
-    .type = _MM_TYPE(DISP, BASE, INDEX, SCALE),                                \
-    _OPTIONAL(.imm = DISP, DISP)                        _OPTIONAL_COMMA(DISP)  \
-    _OPTIONAL(.reg1_offset = _OFFSET(BASE), BASE)       _OPTIONAL_COMMA(BASE)  \
-    _OPTIONAL(.reg1_mask = 0, BASE)                     _OPTIONAL_COMMA(BASE)  \
-    _OPTIONAL(.reg2_offset = _OFFSET(INDEX), INDEX)     _OPTIONAL_COMMA(INDEX) \
-    _OPTIONAL(.scal = SCALE, SCALE)                     _OPTIONAL_COMMA(SCALE) \
+    .type = MM_TYPE(DISP, BASE, INDEX, SCALE),                                 \
+    OPTIONAL(.imm = DISP, DISP)                        OPTIONAL_COMMA(DISP)    \
+    OPTIONAL(.reg1_offset = OFFSET(BASE), BASE)        OPTIONAL_COMMA(BASE)    \
+    OPTIONAL(.reg1_mask = 0, BASE)                     OPTIONAL_COMMA(BASE)    \
+    OPTIONAL(.reg2_offset = OFFSET(INDEX), INDEX)      OPTIONAL_COMMA(INDEX)   \
+    OPTIONAL(.scal = SCALE, SCALE)                     OPTIONAL_COMMA(SCALE)   \
   }
 // clang-format on
 
-#define EFFECTIVE(...) _EFFECTIVE_HELPER(__VA_ARGS__, , , )
+#define EFFECTIVE(...) EFFECTIVE_HELPER(__VA_ARGS__, , , )
 
-#define READ_MASK(PTR, MASK) (*(uint64_t *)PTR & MASK)
+#define READ_MASK(PTR, MASK) (*(uint64_t *)(PTR) & (MASK))
 #define WRITE_MASK(PTR, VAL, MASK)                                             \
-  *(uint64_t *)PTR = (*(uint64_t *)PTR & ~MASK) | ((VAL) & MASK)
+  *(uint64_t *)(PTR) = (*(uint64_t *)(PTR) & ~(MASK)) | ((VAL) & (MASK))
+
+#endif // UTILS_H
