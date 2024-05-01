@@ -1,0 +1,5 @@
+Checks:
+  - "*"
+  - -bugprone-easily-swappable-parameters
+  - -altera-struct-pack-align
+  - -altera-unroll-loops
