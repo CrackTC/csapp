@@ -1,13 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define DEFINE_CLEANUP_FUNC(T)                                                 \
-  void free_##T##_ptr(T##_t **(T)) {                                           \
-    free_##T(*(T));                                                            \
-    *(T) = (void *)0;                                                          \
-  }
-
-#define CLEANUP(x) __attribute__((cleanup(x)))
+#include "common.h"
 
 #define SIZE(M) sizeof(((reg_t *)0)->M)
 #define OFFSET(M) offsetof(reg_t, M)
@@ -19,18 +13,6 @@
   { .type = REG, .reg1_offset = OFFSET(R), .reg1_mask = REG_MASK(R) }
 #define DOLLAR(I)                                                              \
   { .type = IMM, .imm = (I) }
-
-#define COMMA ,
-#define EXPAND(MACRO, ...) MACRO(__VA_ARGS__)
-#define THIRD(first, second, third, ...) third
-
-#define OPTIONAL_ARG(...) , ##__VA_ARGS__
-
-#define OPTIONAL_HELPER(THING, ...) THIRD(first, ##__VA_ARGS__, THING, )
-#define OPTIONAL(THING, COND) EXPAND(OPTIONAL_HELPER, THING OPTIONAL_ARG(COND))
-
-#define OPTIONAL_COMMA_HELPER(...) THIRD(first, ##__VA_ARGS__, COMMA, )
-#define OPTIONAL_COMMA(COND) OPTIONAL_COMMA_HELPER(COND)
 
 #define MM_TYPE_CONCAT(DISP, BASE, INDEX, SCALE) MM##DISP##BASE##INDEX##SCALE
 

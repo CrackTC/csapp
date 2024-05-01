@@ -1,9 +1,9 @@
 #include "cpu.h"
+#include "common.h"
 #include "decoder.h"
 #include "executor.h"
 #include "mem.h"
 #include "mmu.h"
-#include "utils.h"
 #include <stddef.h>
 #include <stdlib.h>
 

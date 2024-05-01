@@ -1,8 +1,8 @@
 #include "decoder.h"
+#include "common.h"
 #include "inst.h"
 #include "mmu.h"
 #include "reg.h"
-#include "utils.h"
 #include <stdint.h>
 #include <stdlib.h>
 

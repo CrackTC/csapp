@@ -1,8 +1,8 @@
+#include "common.h"
 #include "conf.h"
 #include "elf.h"
 #include "examples.h"
 #include "machine.h"
-#include "utils.h"
 
 int main() {
   CLEANUP(free_machine_ptr)

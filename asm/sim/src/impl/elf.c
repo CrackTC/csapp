@@ -1,6 +1,6 @@
 #include "elf.h"
+#include "common.h"
 #include "inst.h"
-#include "utils.h"
 #include <stdlib.h>
 
 elf_t *new_elf(const inst_t *text) {
