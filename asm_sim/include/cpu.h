@@ -9,29 +9,7 @@ typedef struct cpu_t cpu_t;
 #include "reg.h"
 
 struct cpu_t {
-  struct {
-    QWORD_REG_ALPHA(a);
-    QWORD_REG_ALPHA(b);
-    QWORD_REG_ALPHA(c);
-    QWORD_REG_ALPHA(d);
-
-    QWORD_REG_SPECIAL(si);
-    QWORD_REG_SPECIAL(di);
-    QWORD_REG_SPECIAL(bp);
-    QWORD_REG_SPECIAL(sp);
-
-    QWORD_REG_SPECIAL(ip);
-
-    QWORD_REG_NUMBER(8);
-    QWORD_REG_NUMBER(9);
-    QWORD_REG_NUMBER(10);
-    QWORD_REG_NUMBER(11);
-    QWORD_REG_NUMBER(12);
-    QWORD_REG_NUMBER(13);
-    QWORD_REG_NUMBER(14);
-    QWORD_REG_NUMBER(15);
-  } regs;
-
+  reg_t regs;
   decoder_t *decoder;
   executor_t *executor;
   mmu_t *mmu;

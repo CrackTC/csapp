@@ -6,5 +6,6 @@ project(asm_sim)
 
 aux_source_directory(./src SRC_LIST)
 aux_source_directory(./src/impl SRC_LIST)
+aux_source_directory(./src/examples SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 target_include_directories(${PROJECT_NAME} PRIVATE ./include)

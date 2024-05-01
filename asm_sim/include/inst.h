@@ -40,9 +40,9 @@ typedef enum {
 typedef struct {
   int64_t imm;
 
-  void *reg1;
+  size_t reg1_offset;
   uint64_t reg1_mask;
-  void *reg2;
+  size_t reg2_offset;
 
   uint64_t scal;
 

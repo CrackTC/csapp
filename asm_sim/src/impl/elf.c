@@ -2,10 +2,9 @@
 #include "utils.h"
 #include <stdlib.h>
 
-elf_t *new_elf(inst_t *text, size_t len) {
+elf_t *new_elf(inst_t *text) {
   elf_t *result = malloc(sizeof(elf_t));
   result->text = text;
-  result->len = len;
   return result;
 }
 

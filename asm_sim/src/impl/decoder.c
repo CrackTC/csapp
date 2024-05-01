@@ -23,15 +23,15 @@ void *decoder_decode_od(decoder_t *dec, od_t *od) {
     return &od->imm;
 
   if (od->type == REG)
-    return od->reg1;
+    return (void *)&dec->cpu->regs + od->reg1_offset;
 
   uint64_t offset = 0;
   if (od->type & REG2)
-    offset += *(uint64_t *)od->reg2;
+    offset += *(uint64_t *)((void *)&dec->cpu->regs + od->reg2_offset);
   if (od->type & SCAL)
     offset *= od->scal;
   if (od->type & REG1)
-    offset += *(uint64_t *)od->reg1;
+    offset += *(uint64_t *)((void *)&dec->cpu->regs + od->reg1_offset);
   if (od->type & IMM)
     offset += od->imm;
 

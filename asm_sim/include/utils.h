@@ -6,11 +6,16 @@
     *T = (void *)0;                                                            \
   }
 
+#define _CLEANUP_(x) __attribute__((cleanup(x)))
+
+#define _SIZE(M) sizeof(((reg_t *)0)->M)
+#define _OFFSET(M) offsetof(reg_t, M)
+
 #define _REG_MASK(R)                                                           \
-  (((1ull << (sizeof(R) * 8 - 1)) - 1) | 1ull << (sizeof(R) * 8 - 1))
+  (((1ull << (_SIZE(R) * 8 - 1)) - 1) | 1ull << (_SIZE(R) * 8 - 1))
 
 #define PERCENT(R)                                                             \
-  { .type = REG, .reg1 = &R, .reg1_mask = _REG_MASK(R) }
+  { .type = REG, .reg1_offset = _OFFSET(R), .reg1_mask = _REG_MASK(R) }
 #define DOLLAR(I)                                                              \
   { .type = IMM, .imm = I }
 
@@ -38,9 +43,9 @@
   {                                                                            \
     .type = _MM_TYPE(DISP, BASE, INDEX, SCALE),                                \
     _OPTIONAL(.imm = DISP, DISP)                        _OPTIONAL_COMMA(DISP)  \
-    _OPTIONAL(.reg1 = &BASE, BASE)                      _OPTIONAL_COMMA(BASE)  \
+    _OPTIONAL(.reg1_offset = _OFFSET(BASE), BASE)       _OPTIONAL_COMMA(BASE)  \
     _OPTIONAL(.reg1_mask = 0, BASE)                     _OPTIONAL_COMMA(BASE)  \
-    _OPTIONAL(.reg2 = &INDEX, INDEX)                    _OPTIONAL_COMMA(INDEX) \
+    _OPTIONAL(.reg2_offset = _OFFSET(INDEX), INDEX)     _OPTIONAL_COMMA(INDEX) \
     _OPTIONAL(.scal = SCALE, SCALE)                     _OPTIONAL_COMMA(SCALE) \
   }
 // clang-format on
