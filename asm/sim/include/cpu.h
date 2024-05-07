@@ -13,6 +13,7 @@ typedef struct cpu_t cpu_t;
 
 struct core_t {
   reg_t regs;
+  flags_t flags;
   decoder_t *decoder;
   executor_t *executor;
 };

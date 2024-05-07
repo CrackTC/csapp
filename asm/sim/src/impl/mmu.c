@@ -1,7 +1,7 @@
 #include "mmu.h"
+#include "common.h"
 #include "mem.h"
 #include "stdint.h"
-#include "utils.h"
 #include <stdlib.h>
 
 struct mmu_t {

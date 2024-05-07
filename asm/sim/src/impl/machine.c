@@ -1,11 +1,12 @@
 #include "machine.h"
+#include "common.h"
 #include "cpu.h"
 #include "decoder.h"
 #include "elf.h"
 #include "executor.h"
 #include "inst.h"
 #include "mem.h"
-#include "utils.h"
+#include "parser.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,21 @@ machine_t *new_machine(size_t core_count, size_t mm_size) {
   machine_t *result = malloc(sizeof(machine_t));
   result->mm = new_mem(mm_size);
   result->cpu = new_cpu(result->mm, core_count);
+  result->parser = new_parser();
   return result;
+}
+
+void machine_run_text(machine_t *machine, size_t line_count, const char **lines,
+                      size_t core_num) {
+  inst_t *insts = malloc(sizeof(inst_t) * line_count);
+  for (size_t i = 0; i < line_count; i++) {
+    inst_t *inst = parser_parse_inst(machine->parser, lines[i]);
+    insts[i] = *inst;
+    free(inst);
+  }
+
+  CLEANUP(free_elf_ptr) elf_t *elf = new_elf(insts);
+  machine_run(machine, elf, core_num);
 }
 
 void machine_run(machine_t *machine, elf_t *elf, size_t core_num) {
@@ -29,7 +44,7 @@ void machine_run(machine_t *machine, elf_t *elf, size_t core_num) {
 
     puts(inst.code);
 
-    if (inst.op == HALT) {
+    if (inst.op == HLT) {
       break;
     }
 
@@ -43,6 +58,7 @@ void machine_run(machine_t *machine, elf_t *elf, size_t core_num) {
 }
 
 void free_machine(machine_t *machine) {
+  free_parser(machine->parser);
   free_cpu(machine->cpu);
   free_mem(machine->mm);
   free(machine);

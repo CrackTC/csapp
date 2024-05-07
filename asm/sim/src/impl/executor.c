@@ -1,4 +1,5 @@
 #include "executor.h"
+#include "common.h"
 #include "inst.h"
 #include "mmu.h"
 #include "reg.h"
@@ -97,6 +98,11 @@ static void handler_dbg(executor_t *executor, void *src, void *dst,
   printf("%s%s", CSI, "0m");
 }
 
+static void handler_nop(executor_t *executor, void *src, void *dst,
+                        uint64_t mask) {
+  (void)executor, (void)src, (void)dst, (void)mask;
+}
+
 typedef void (*handler_t)(executor_t *executor, void *src, void *dst,
                           uint64_t mask);
 
@@ -104,7 +110,7 @@ const handler_t handlers[] = {
     [PUSH] = handler_push, [POP] = handler_pop, [CALL] = handler_call,
     [RET] = handler_ret,   [MOV] = handler_mov, [MOVL] = handler_movl,
     [MOVQ] = handler_movq, [ADD] = handler_add, [SUB] = handler_sub,
-    [XOR] = handler_xor,   [DBG] = handler_dbg,
+    [XOR] = handler_xor,   [DBG] = handler_dbg, [NOP] = handler_nop,
 };
 
 void executor_exec(executor_t *executor, op_t opr, void *src, void *dst,

@@ -1,23 +1,26 @@
 #ifndef INST_H
 #define INST_H
 
+#include "common.h" // IWYU pragma: keep
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum : unsigned {
-  PUSH,
-  POP,
-  CALL,
-  RET,
-  MOV,
-  MOVL,
-  MOVQ,
-  ADD,
-  SUB,
-  XOR,
-  HALT,
-  DBG
-} op_t;
+#define FOREACH_OP(MACRO, ...)                                                 \
+  MACRO(__VA_ARGS__, PUSH)                                                     \
+  MACRO(__VA_ARGS__, POP)                                                      \
+  MACRO(__VA_ARGS__, CALL)                                                     \
+  MACRO(__VA_ARGS__, RET)                                                      \
+  MACRO(__VA_ARGS__, MOV)                                                      \
+  MACRO(__VA_ARGS__, MOVL)                                                     \
+  MACRO(__VA_ARGS__, MOVQ)                                                     \
+  MACRO(__VA_ARGS__, ADD)                                                      \
+  MACRO(__VA_ARGS__, SUB)                                                      \
+  MACRO(__VA_ARGS__, XOR)                                                      \
+  MACRO(__VA_ARGS__, HLT)                                                      \
+  MACRO(__VA_ARGS__, NOP)                                                      \
+  MACRO(__VA_ARGS__, DBG)
+
+typedef enum : unsigned { FOREACH_OP(MAKE_ARG2) } op_t;
 
 typedef enum : unsigned {
   IMM = 1U,

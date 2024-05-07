@@ -10,6 +10,9 @@
 #define CLEANUP(x) __attribute__((cleanup(x)))
 
 #define COMMA ,
+#define CONCAT(A, B) A##B
+#define MAKE_ARG(_, A) , A
+#define MAKE_ARG2(_, A) A,
 #define EXPAND(MACRO, ...) MACRO(__VA_ARGS__)
 #define THIRD(first, second, third, ...) third
 

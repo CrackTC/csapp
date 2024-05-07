@@ -22,7 +22,7 @@ static const inst_t insts[] = {
     {XOR , PERCENT(eax), PERCENT(eax), .code = "xor %eax, %eax"},
     {ADD , DOLLAR(0x20), PERCENT(rsp), .code = "add $0x20, %rsp"},
     {POP , PERCENT(rbp), .code = "pop %rbp"},
-    {HALT, .code = "hlt"},
+    {HLT, .code = "hlt"},
 
     // add
     [26] =

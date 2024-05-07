@@ -1,0 +1,36 @@
+push %rbp
+mov %rsp,%rbp
+sub $0x20,%rsp
+movl $0x0,-0x4(%rbp)
+movq $0x12340000,-0x10(%rbp)
+movq $0xabcd,-0x18(%rbp)
+mov -0x10(%rbp),%rdi
+mov -0x18(%rbp),%rsi
+call $26
+mov %rax,%rdi
+dbg
+mov %rax,-0x20(%rbp)
+xor %eax,%eax
+mov %rax,%rdi
+dbg
+add $0x20,%rsp
+pop %rbp
+hlt
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+nop
+push %rbp
+mov %rsp,%rbp
+mov %rdi,-0x8(%rbp)
+mov %rsi,-0x10(%rbp)
+mov -0x8(%rbp),%rax
+add -0x10(%rbp),%rax
+mov %rax,-0x18(%rbp)
+mov -0x18(%rbp),%rax
+pop %rbp
+ret
