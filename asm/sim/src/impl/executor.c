@@ -10,12 +10,14 @@
 
 struct executor_t {
   reg_t *reg_ref;
+  flags_t *flags_ref;
   mmu_t *mmu_ref;
 };
 
-executor_t *new_executor(reg_t *reg, mmu_t *mmu) {
+executor_t *new_executor(reg_t *reg, flags_t *flags, mmu_t *mmu) {
   executor_t *result = malloc(sizeof(executor_t));
   result->reg_ref = reg;
+  result->flags_ref = flags;
   result->mmu_ref = mmu;
   return result;
 }
@@ -23,6 +25,8 @@ executor_t *new_executor(reg_t *reg, mmu_t *mmu) {
 void free_executor(executor_t *executor) { free(executor); }
 
 DEFINE_CLEANUP_FUNC(executor)
+
+#define SIGN_BIT(X, MASK) (unsigned)(((X) & (((MASK) >> 1U) + 1)) != 0)
 
 static void handler_push(executor_t *executor, void *src, void *dst,
                          uint64_t mask) {
@@ -74,13 +78,63 @@ static void handler_movq(executor_t *executor, void *src, void *dst,
 static void handler_add(executor_t *executor, void *src, void *dst,
                         uint64_t mask) {
   (void)executor;
-  WRITE_MASK(dst, READ_MASK(dst, mask) + READ_MASK(src, mask), mask);
+  uint64_t a = READ_MASK(src, mask);
+  uint64_t b = READ_MASK(dst, mask);
+  uint64_t c = (a + b) & mask;
+  WRITE_MASK(dst, c, mask);
+  *executor->flags_ref = (flags_t){
+      .cf = c < b,
+      .of = ~(SIGN_BIT(b, mask) ^ SIGN_BIT(a, mask)) &
+            (SIGN_BIT(b, mask) ^ SIGN_BIT(c, mask)),
+      .sf = SIGN_BIT(c, mask),
+      .zf = c == 0,
+  };
 }
 
 static void handler_sub(executor_t *executor, void *src, void *dst,
                         uint64_t mask) {
   (void)executor;
-  WRITE_MASK(dst, READ_MASK(dst, mask) - READ_MASK(src, mask), mask);
+  uint64_t a = READ_MASK(src, mask);
+  uint64_t b = READ_MASK(dst, mask);
+  uint64_t c = (b - a) & mask;
+  WRITE_MASK(dst, c, mask);
+  *executor->flags_ref = (flags_t){
+      .cf = c > b,
+      .of = (SIGN_BIT(b, mask) ^ SIGN_BIT(a, mask)) &
+            (SIGN_BIT(b, mask) ^ SIGN_BIT(c, mask)),
+      .sf = SIGN_BIT(c, mask),
+      .zf = c == 0,
+  };
+}
+
+static void handler_cmpq(executor_t *executor, void *src, void *dst,
+                         uint64_t mask) {
+  (void)executor, (void)mask;
+  uint64_t a = *(uint64_t *)src;
+  uint64_t b = *(uint64_t *)dst;
+  uint64_t c = b - a;
+
+  *executor->flags_ref = (flags_t){
+      .cf = c > b,
+      .of = ((b >> 63U) ^ (a >> 63U)) & ((b >> 63U) ^ (c >> 63U)),
+      .sf = c >> 63U,
+      .zf = c == 0,
+  };
+}
+
+static void handler_jne(executor_t *executor, void *src, void *dst,
+                        uint64_t mask) {
+  (void)dst, (void)mask;
+  if (executor->flags_ref->zf) {
+    return;
+  }
+  executor->reg_ref->rip = *(uint64_t *)src;
+}
+
+static void handler_jmp(executor_t *executor, void *src, void *dst,
+                        uint64_t mask) {
+  (void)dst, (void)mask;
+  executor->reg_ref->rip = *(uint64_t *)src;
 }
 
 static void handler_xor(executor_t *executor, void *src, void *dst,
@@ -107,10 +161,11 @@ typedef void (*handler_t)(executor_t *executor, void *src, void *dst,
                           uint64_t mask);
 
 const handler_t handlers[] = {
-    [PUSH] = handler_push, [POP] = handler_pop, [CALL] = handler_call,
-    [RET] = handler_ret,   [MOV] = handler_mov, [MOVL] = handler_movl,
-    [MOVQ] = handler_movq, [ADD] = handler_add, [SUB] = handler_sub,
-    [XOR] = handler_xor,   [DBG] = handler_dbg, [NOP] = handler_nop,
+    [ADD] = handler_add,   [CALL] = handler_call, [CMPQ] = handler_cmpq,
+    [JNE] = handler_jne,   [JMP] = handler_jmp,   [MOVL] = handler_movl,
+    [MOVQ] = handler_movq, [MOV] = handler_mov,   [NOP] = handler_nop,
+    [POP] = handler_pop,   [PUSH] = handler_push, [RET] = handler_ret,
+    [SUB] = handler_sub,   [XOR] = handler_xor,   [DBG] = handler_dbg,
 };
 
 void executor_exec(executor_t *executor, op_t opr, void *src, void *dst,

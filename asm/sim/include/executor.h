@@ -8,7 +8,7 @@ typedef struct executor_t executor_t;
 #include "reg.h"
 #include <stdint.h>
 
-executor_t *new_executor(reg_t *reg, mmu_t *mmu);
+executor_t *new_executor(reg_t *reg, flags_t *flags, mmu_t *mmu);
 void free_executor(executor_t *executor);
 void free_executor_ptr(executor_t **executor);
 void executor_exec(executor_t *executor, op_t opr, void *src, void *dst,

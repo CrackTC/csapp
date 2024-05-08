@@ -10,7 +10,7 @@
 static core_t *new_core(mmu_t *mmu) {
   core_t *result = malloc(sizeof(core_t));
   result->decoder = new_decoder(&result->regs, mmu);
-  result->executor = new_executor(&result->regs, mmu);
+  result->executor = new_executor(&result->regs, &result->flags, mmu);
   return result;
 }
 

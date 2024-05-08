@@ -28,8 +28,7 @@ void machine_run_text(machine_t *machine, size_t line_count, const char **lines,
   for (size_t i = 0; i < line_count; i++) {
     inst_t *inst = parser_parse_inst(machine->parser, lines[i]);
     if (inst != NULL) {
-      insts[i] = *inst;
-      inst_count++;
+      insts[inst_count++] = *inst;
       free(inst);
     }
   }
@@ -55,12 +54,11 @@ void machine_run(machine_t *machine, elf_t *elf, size_t core_id) {
   machine_load_elf(machine, elf);
 
   while (1) {
-    const inst_t *inst =
-        *(inst_t **)mmu_va2pa(machine->cpu->mmu, core->regs.rip);
+    void *pa = mmu_va2pa(machine->cpu->mmu, core->regs.rip);
+    const inst_t *inst = *(const inst_t **)pa;
 
+    printf("0x%lx: %s\n", core->regs.rip, inst->code);
     core->regs.rip += sizeof(uint64_t);
-
-    puts(inst->code);
 
     if (inst->op == HLT) {
       break;

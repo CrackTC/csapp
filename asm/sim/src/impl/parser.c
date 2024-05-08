@@ -95,7 +95,10 @@ parser_t *new_parser() {
   result->inst = new_sequence_parser(
       3, result->op,
       new_optional_parser(new_sequence_parser(
-          2, new_multiple_parser(new_exact_parser(' ')), operand_parser)),
+          2,
+          new_multiple_parser(new_one_of_parser(2, new_exact_parser(' '),
+                                                new_exact_parser('\t'))),
+          operand_parser)),
       new_optional_parser(new_sequence_parser(2, delim, operand_parser)));
 
   return result;

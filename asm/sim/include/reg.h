@@ -96,10 +96,10 @@ typedef struct {
 typedef union {
   uint8_t flags;
   struct {
-    uint8_t cf : 1;
-    uint8_t of : 1;
-    uint8_t sf : 1;
-    uint8_t zf : 1;
+    uint8_t cf : 1; // Carry flag
+    uint8_t of : 1; // Overflow flag
+    uint8_t sf : 1; // Sign flag
+    uint8_t zf : 1; // Zero flag
   };
 } flags_t;
 

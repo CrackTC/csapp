@@ -1,0 +1,33 @@
+push   %rbp // 0x00400000
+mov    %rsp,%rbp
+sub    $0x10,%rsp
+movl   $0x0,-0x4(%rbp)
+mov    $0x64,%edi
+call   $0x00400060
+mov    %rax,%rdi
+dbg
+xor    %eax,%eax
+add    $0x10,%rsp
+pop    %rbp
+hlt
+push   %rbp
+mov    %rsp,%rbp
+sub    $0x20,%rsp
+mov    %rdi,-0x10(%rbp)
+cmpq   $0x0,-0x10(%rbp)
+jne    $0x004000a0
+movq   $0x0,-0x8(%rbp)
+jmp    $0x004000e8
+mov    -0x10(%rbp),%rax
+mov    %rax,-0x18(%rbp)
+mov    -0x10(%rbp),%rdi
+sub    $0x1,%rdi
+call   $0x00400060
+mov    %rax,%rcx
+mov    -0x18(%rbp),%rax
+add    %rcx,%rax
+mov    %rax,-0x8(%rbp)
+mov    -0x8(%rbp),%rax
+add    $0x20,%rsp
+pop    %rbp
+ret

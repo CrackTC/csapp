@@ -6,18 +6,21 @@
 #include <stdint.h>
 
 #define FOREACH_OP(MACRO, ...)                                                 \
-  MACRO(__VA_ARGS__, PUSH)                                                     \
-  MACRO(__VA_ARGS__, POP)                                                      \
+  MACRO(__VA_ARGS__, ADD)                                                      \
   MACRO(__VA_ARGS__, CALL)                                                     \
-  MACRO(__VA_ARGS__, RET)                                                      \
+  MACRO(__VA_ARGS__, CMPQ)                                                     \
+  MACRO(__VA_ARGS__, HLT)                                                      \
+  MACRO(__VA_ARGS__, JMP)                                                      \
+  MACRO(__VA_ARGS__, JNE)                                                      \
   MACRO(__VA_ARGS__, MOV)                                                      \
   MACRO(__VA_ARGS__, MOVL)                                                     \
   MACRO(__VA_ARGS__, MOVQ)                                                     \
-  MACRO(__VA_ARGS__, ADD)                                                      \
+  MACRO(__VA_ARGS__, NOP)                                                      \
+  MACRO(__VA_ARGS__, POP)                                                      \
+  MACRO(__VA_ARGS__, PUSH)                                                     \
+  MACRO(__VA_ARGS__, RET)                                                      \
   MACRO(__VA_ARGS__, SUB)                                                      \
   MACRO(__VA_ARGS__, XOR)                                                      \
-  MACRO(__VA_ARGS__, HLT)                                                      \
-  MACRO(__VA_ARGS__, NOP)                                                      \
   MACRO(__VA_ARGS__, DBG)
 
 typedef enum : unsigned { FOREACH_OP(MAKE_ARG2) } op_t;
