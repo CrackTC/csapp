@@ -6,7 +6,7 @@ movq $0x12340000,-0x10(%rbp)
 movq $0xabcd,-0x18(%rbp)
 mov -0x10(%rbp),%rdi
 mov -0x18(%rbp),%rsi
-call $26
+call $0x4000d0
 mov %rax,%rdi
 dbg
 mov %rax,-0x20(%rbp)

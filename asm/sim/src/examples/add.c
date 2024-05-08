@@ -15,7 +15,7 @@ static const inst_t insts[] = {
     {MOVQ, DOLLAR(0xabcd), EFFECTIVE(-0x18, rbp), .code = "movq $0xabcd, -0x18(%rbp)"},
     {MOV , EFFECTIVE(-0x10, rbp), PERCENT(rdi), .code = "mov -0x10(%rbp), %rdi"},
     {MOV , EFFECTIVE(-0x18, rbp), PERCENT(rsi), .code = "mov -0x18(%rbp), %rsi"},
-    {CALL, DOLLAR(26), .code = "call <add>"},
+    {CALL, DOLLAR(0x4000d0), .code = "call <add>"},
     {MOV , PERCENT(rax), PERCENT(rdi), .code = "mov %rax, %rdi"},
     {DBG , .code = "dbg"},
     {MOV , PERCENT(rax), EFFECTIVE(-0x20, rbp), .code = "mov %rax, -0x20(%rbp)"},
@@ -39,4 +39,4 @@ static const inst_t insts[] = {
 };
 // clang-format on
 
-elf_t *add() { return new_elf(insts); }
+elf_t *add() { return new_elf(insts, sizeof(insts) / sizeof(inst_t)); }

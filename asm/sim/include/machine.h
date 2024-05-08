@@ -18,7 +18,7 @@ struct machine_t {
 machine_t *new_machine(size_t core_count, size_t mm_size);
 void free_machine(machine_t *machine);
 void free_machine_ptr(machine_t **machine);
-void machine_run(machine_t *machine, elf_t *elf, size_t core_num);
-void machine_run_text(machine_t *machine, size_t line_count, const char **lines, size_t core_num);
+void machine_run(machine_t *machine, elf_t *elf, size_t core_id);
+void machine_run_text(machine_t *machine, size_t line_count, const char **lines, size_t core_id);
 
 #endif // MACHINE_H

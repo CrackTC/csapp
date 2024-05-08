@@ -3,9 +3,10 @@
 #include "inst.h"
 #include <stdlib.h>
 
-elf_t *new_elf(const inst_t *text) {
+elf_t *new_elf(const inst_t *text, size_t inst_count) {
   elf_t *result = malloc(sizeof(elf_t));
   result->text = text;
+  result->inst_count = inst_count;
   return result;
 }
 

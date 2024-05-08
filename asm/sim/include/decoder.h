@@ -10,6 +10,6 @@ typedef struct decoder_t decoder_t;
 decoder_t *new_decoder(reg_t *reg, mmu_t *mmu);
 void free_decoder(decoder_t *decoder);
 void free_decoder_ptr(decoder_t **decoder);
-void *decoder_decode_od(decoder_t *decoder, od_t *operand);
+void *decoder_decode_od(decoder_t *decoder, const od_t *operand);
 
 #endif // DECODER_H

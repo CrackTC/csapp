@@ -2,6 +2,7 @@
 #include "conf.h"
 #include "machine.h"
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -22,9 +22,9 @@ void free_decoder(decoder_t *dec) { free(dec); }
 
 DEFINE_CLEANUP_FUNC(decoder)
 
-void *decoder_decode_od(decoder_t *dec, od_t *operand) {
+void *decoder_decode_od(decoder_t *dec, const od_t *operand) {
   if (operand->type == IMM) {
-    return &operand->imm;
+    return (void *)&operand->imm; // need to ensure imm is not changed
   }
 
   if (operand->type == REG) {

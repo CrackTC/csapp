@@ -8,3 +8,5 @@ Checks:
   - -readability-identifier-length
   - -altera-id-dependent-backward-branch
   - -readability-function-cognitive-complexity
+  - -concurrency-mt-unsafe
+  - -bugprone-suspicious-realloc-usage
