@@ -151,13 +151,13 @@ static void handler_xor(executor_t *executor, void *src, void *dst,
   };
 }
 
+#define CSI "\33["
 static void handler_dbg(executor_t *executor, void *src, void *dst,
                         uint64_t mask) {
   (void)src, (void)dst, (void)mask;
-  static const char *CSI = "\33[";
-  printf("%s%s", CSI, "32m");
+  printf(CSI "32m");
   printf("> dbg: 0x%lx\n", executor->reg_ref->rdi);
-  printf("%s%s", CSI, "0m");
+  printf(CSI "0m");
 }
 
 static void handler_nop(executor_t *executor, void *src, void *dst,
