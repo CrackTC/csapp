@@ -139,8 +139,16 @@ static void handler_jmp(executor_t *executor, void *src, void *dst,
 
 static void handler_xor(executor_t *executor, void *src, void *dst,
                         uint64_t mask) {
-  (void)executor;
-  WRITE_MASK(dst, READ_MASK(dst, mask) ^ READ_MASK(src, mask), mask);
+  uint64_t a = READ_MASK(src, mask);
+  uint64_t b = READ_MASK(dst, mask);
+  uint64_t c = a ^ b;
+  WRITE_MASK(dst, c, mask);
+  *executor->flags_ref = (flags_t){
+      .cf = 0,
+      .of = 0,
+      .sf = SIGN_BIT(c, mask),
+      .zf = c == 0,
+  };
 }
 
 static void handler_dbg(executor_t *executor, void *src, void *dst,
