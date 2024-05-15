@@ -30,24 +30,14 @@ void print_node(parse_node_t *node_ref, int depth) {
 
 int main() {
   CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *dec_digit = new_range_parser('0', '9');
-  CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *atof = new_range_parser('a', 'f');
-  CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *AtoF = new_range_parser('A', 'F');
-  CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *hex_digit = new_one_of_parser(3, dec_digit, atof, AtoF);
-
-  CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *hex_digits = new_multiple_parser(hex_digit);
-  CLEANUP(free_parse_parser_ptr) parse_parser_t *zero = new_exact_parser('0');
-  CLEANUP(free_parse_parser_ptr) parse_parser_t *x = new_exact_parser('x');
-  CLEANUP(free_parse_parser_ptr)
-  parse_parser_t *hex_number = new_sequence_parser(3, zero, x, hex_digits);
+  parse_parser_t *hex = new_sequence_parser(
+      2, new_string_parser("0x"),
+      new_multiple_parser(new_one_of_parser(3, new_range_parser('0', '9'),
+                                            new_range_parser('a', 'f'),
+                                            new_range_parser('A', 'F'))));
 
   const char *input = "0x1234567890abcdefABCDEF";
-  CLEANUP(free_parse_node_ptr)
-  parse_node_t *node = parser_parse(hex_number, input);
+  CLEANUP(free_parse_node_ptr) parse_node_t *node = parser_parse(hex, input);
   print_node(node, 0);
   return 0;
 }

@@ -4,6 +4,7 @@
 #include "parse/node.h"
 #include "parse/parser.h"
 #include "parse/parsers.h"
+#include "parse/trivial.h"
 #include "reg.h"
 #include "utils.h"
 #include <assert.h>
@@ -36,7 +37,6 @@ struct parser_t {
   parse_parser_t *reg;
   parse_parser_t *reg_full;
 
-  parse_parser_t *hex;
   parse_parser_t *imm;
   parse_parser_t *effective;
 
@@ -54,52 +54,36 @@ parser_t *new_parser() {
   parser_t *result = malloc(sizeof(parser_t));
 
   parse_parser_t *alpha = new_range_parser('a', 'z');
-  FOREACH_OP(INIT_INST_PARSER, result)
+  FOREACH_OP(INIT_INST_PARSER, result);
   INIT_NAME_PARSER(result, op, FOREACH_OP);
 
-  FOREACH_REG(INIT_REG_PARSER, result)
+  FOREACH_REG(INIT_REG_PARSER, result);
   INIT_NAME_PARSER(result, reg, FOREACH_REG);
   result->reg_full = new_sequence_parser(2, new_exact_parser('%'), result->reg);
 
-  parse_parser_t *zero_to_nine = new_range_parser('0', '9');
-  parse_parser_t *dec =
-      new_sequence_parser(2, new_optional_parser(new_exact_parser('-')),
-                          new_multiple_parser(zero_to_nine));
-  result->hex = new_sequence_parser(
-      3, new_optional_parser(new_exact_parser('-')), new_string_parser("0x"),
-      new_multiple_parser(new_one_of_parser(3, new_range_parser('A', 'F'),
-                                            new_range_parser('a', 'f'),
-                                            zero_to_nine)));
-  result->imm = new_sequence_parser(2, new_exact_parser('$'),
-                                    new_one_of_parser(2, result->hex, dec));
-
-  parse_parser_t *delim = new_sequence_parser(
-      3, new_optional_parser(new_multiple_parser(new_exact_parser(' '))),
-      new_exact_parser(','),
-      new_optional_parser(new_multiple_parser(new_exact_parser(' '))));
+  result->imm = new_sequence_parser(2, new_exact_parser('$'), number_parser());
 
   parse_parser_t *paren_parser = new_sequence_parser(
       5, new_exact_parser('('), new_optional_parser(result->reg_full),
-      new_optional_parser(new_sequence_parser(2, delim, result->reg_full)),
-      new_optional_parser(new_sequence_parser(
-          2, delim, new_one_of_parser(2, result->hex, dec))),
+      new_optional_parser(
+          new_sequence_parser(2, delim_parser(), result->reg_full)),
+      new_optional_parser(
+          new_sequence_parser(2, delim_parser(), number_parser())),
       new_exact_parser(')'));
 
-  result->effective = new_sequence_parser(
-      2, new_optional_parser(new_one_of_parser(2, result->hex, dec)),
-      new_optional_parser(paren_parser));
+  result->effective =
+      new_sequence_parser(2, new_optional_parser(number_parser()),
+                          new_optional_parser(paren_parser));
 
   parse_parser_t *operand_parser =
       new_one_of_parser(3, result->reg_full, result->imm, result->effective);
 
   result->inst = new_sequence_parser(
       3, result->op,
-      new_optional_parser(new_sequence_parser(
-          2,
-          new_multiple_parser(new_one_of_parser(2, new_exact_parser(' '),
-                                                new_exact_parser('\t'))),
-          operand_parser)),
-      new_optional_parser(new_sequence_parser(2, delim, operand_parser)));
+      new_optional_parser(
+          new_sequence_parser(2, white_spaces_parser(), operand_parser)),
+      new_optional_parser(
+          new_sequence_parser(2, delim_parser(), operand_parser)));
 
   return result;
 }
@@ -112,50 +96,6 @@ parser_t *new_parser() {
 static op_t parse_op(parser_t *parser, parse_node_t *node) {
   FOREACH_OP(CASE_OP, node, parser)
   assert(0 && "Unknown instruction");
-}
-
-static int64_t parse_dec_number(parse_node_t *node) {
-  int sign = 1;
-  if (node->children[0]->parser_ref != none_parser()) {
-    sign = -1;
-  }
-
-  uint64_t result = 0;
-  parse_node_t *digits = node->children[1];
-  for (const char *ch = digits->start_ref; ch != digits->end_ref; ++ch) {
-    result = (result << 3U) + (result << 1U) + *ch - '0';
-  }
-
-  return sign * (int64_t)result;
-}
-
-static int64_t parse_hex_number(parse_node_t *node) {
-  int sign = 1;
-  if (node->children[0]->parser_ref != none_parser()) {
-    sign = -1;
-  }
-
-  uint64_t result = 0;
-  parse_node_t *digits = node->children[2];
-  for (const char *ch = digits->start_ref; ch != digits->end_ref; ++ch) {
-    result <<= 4U;
-    if ('0' <= *ch && *ch <= '9') {
-      result += *ch - '0';
-    } else if ('A' <= *ch && *ch <= 'F') {
-      result += *ch - 'A' + 10;
-    } else {
-      result += *ch - 'a' + 10;
-    }
-  }
-
-  return sign * (int64_t)result;
-}
-
-static int64_t parse_number(parser_t *parser, parse_node_t *node) {
-  if (node->parser_ref == parser->hex) {
-    return parse_hex_number(node);
-  }
-  return parse_dec_number(node);
 }
 
 #define CASE_REG(NODE, PARSER, REG)                                            \
@@ -186,7 +126,7 @@ static void parse_paren(parser_t *parser, parse_node_t *node, od_t *result) {
   }
   if (node->children[3]->parser_ref != none_parser()) {
     result->type |= SCAL;
-    result->scal = parse_number(parser, node->children[3]->children[1]);
+    result->scal = parse_number(node->children[3]->children[1]);
   }
 }
 
@@ -197,7 +137,7 @@ static od_t parse_effective(parser_t *parser, parse_node_t *node) {
   parse_node_t *paren = node->children[1];
   if (disp->parser_ref != none_parser()) {
     result.type |= IMM;
-    result.imm = parse_number(parser, disp);
+    result.imm = parse_number(disp);
   }
   if (paren->parser_ref != none_parser()) {
     parse_paren(parser, paren, &result);
@@ -218,7 +158,7 @@ static od_t parse_operand(parser_t *parser, parse_node_t *node) {
 
   if (node->parser_ref == parser->imm) {
     od_t result = {.type = IMM};
-    result.imm = parse_number(parser, node->children[1]);
+    result.imm = parse_number(node->children[1]);
     return result;
   }
 

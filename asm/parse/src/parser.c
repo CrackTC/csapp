@@ -2,10 +2,12 @@
 #include "common.h"
 #include "parse/node.h"
 #include "parse/parsers.h"
+#include "parse/trivial.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef parse_node_t *(*parse_func)(const parse_parser_t *this,
                                     const char *input);
@@ -298,4 +300,75 @@ parse_parser_t *new_lowercase_parser(const char *str) {
   parser->data = data;
   parser->parse = lowercase_parser_parse;
   return parser;
+}
+
+/* trivial parsers */
+
+#define DEFINE_TRIVIAL_PARSER(name, expr)                                      \
+  parse_parser_t *name##_parser() {                                            \
+    static parse_parser_t *parser = NULL;                                      \
+    if (parser == NULL) {                                                      \
+      parser = expr;                                                           \
+      parser->ref_count = 1;                                                   \
+    }                                                                          \
+    return parser;                                                             \
+  }
+
+DEFINE_TRIVIAL_PARSER(white_space, new_one_of_parser(2, new_exact_parser(' '),
+                                                     new_exact_parser('\t')));
+DEFINE_TRIVIAL_PARSER(extend_white_space,
+                      new_one_of_parser(5, new_exact_parser(' '),
+                                        new_exact_parser('\t'),
+                                        new_exact_parser('\n'),
+                                        new_exact_parser('\r'),
+                                        new_exact_parser('\0')));
+DEFINE_TRIVIAL_PARSER(white_spaces, new_multiple_parser(white_space_parser()));
+DEFINE_TRIVIAL_PARSER(
+    delim, new_sequence_parser(3, new_optional_parser(white_spaces_parser()),
+                               new_exact_parser(','),
+                               new_optional_parser(white_spaces_parser())));
+DEFINE_TRIVIAL_PARSER(
+    hex_number,
+    new_sequence_parser(
+        3, new_optional_parser(new_exact_parser('-')), new_string_parser("0x"),
+        new_multiple_parser(new_one_of_parser(3, new_range_parser('0', '9'),
+                                              new_range_parser('a', 'f'),
+                                              new_range_parser('A', 'F')))));
+DEFINE_TRIVIAL_PARSER(
+    dec_number,
+    new_sequence_parser(2, new_optional_parser(new_exact_parser('-')),
+                        new_multiple_parser(new_range_parser('0', '9'))));
+DEFINE_TRIVIAL_PARSER(number, new_one_of_parser(2, hex_number_parser(),
+                                                dec_number_parser()));
+
+int64_t parse_number(parse_node_t *node) {
+  int64_t result = 0;
+  parse_node_t *digits;
+  if (node->parser_ref == hex_number_parser()) {
+    digits = node->children[2];
+    for (const char *c = digits->start_ref; c != digits->end_ref; ++c) {
+      result <<= 4;
+      if (*c <= '9') {
+        result += *c - '0';
+      } else if (*c >= 'a') {
+        result += *c - 'a' + 10;
+      } else {
+        result += *c - 'A' + 10;
+      }
+    }
+  } else {
+    digits = node->children[1];
+    for (const char *c = digits->start_ref; c != digits->end_ref; ++c) {
+      result = (result << 3) + (result << 1) + (*c - '0');
+    }
+  }
+  if (node->children[0]->parser_ref != none_parser()) {
+    result = -result;
+  }
+  return result;
+}
+
+char *parse_string(parse_node_t *node) {
+  return strndup(node->children[0]->start_ref,
+                 node->children[0]->end_ref - node->children[0]->start_ref);
 }
