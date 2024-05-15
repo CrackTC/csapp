@@ -24,6 +24,7 @@ cpu_t *new_cpu(mem_t *mem, size_t core_count) {
   cpu_t *result = malloc(sizeof(cpu_t));
   result->mmu = new_mmu(mem);
   result->cores = malloc(sizeof(core_t *) * core_count);
+  result->core_count = core_count;
   for (size_t i = 0; i < core_count; i++) {
     result->cores[i] = new_core(result->mmu);
   }

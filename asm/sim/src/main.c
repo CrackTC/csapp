@@ -49,5 +49,11 @@ int main(int argc, char *argv[]) {
   }
 
   machine_run_text(machine, line_count, lines, 0);
+
+  for (int i = 0; i < line_count; i++) {
+    free((void *)lines[i]);
+  }
+
+  free(lines);
   return 0;
 }
