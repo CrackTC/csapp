@@ -1,4 +1,5 @@
-push   %rbp // 0x00400000
+# main
+push   %rbp # 0x00400000
 mov    %rsp,%rbp
 sub    $0x10,%rsp
 movl   $0x0,-0x4(%rbp)
@@ -10,6 +11,7 @@ xor    %eax,%eax
 add    $0x10,%rsp
 pop    %rbp
 hlt
+# sum
 push   %rbp
 mov    %rsp,%rbp
 sub    $0x20,%rsp
