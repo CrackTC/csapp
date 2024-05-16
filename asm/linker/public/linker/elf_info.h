@@ -16,14 +16,14 @@ typedef enum {
 } symbol_type_t;
 
 typedef struct {
-  const char *name; /* section_t owns the string */
+  char *name; /* section_t owns the string */
   uint64_t address;
   uint64_t offset;
   uint64_t size; /* here size means line count */
 } section_t;
 
 typedef struct {
-  const char *name; /* symbol_t owns the string */
+  char *name; /* symbol_t owns the string */
   symbol_binding_t binding;
   symbol_type_t type;
   int16_t section; /* -1: COM, -2: UND, -3: BSS */
