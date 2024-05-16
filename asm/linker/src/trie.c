@@ -1,6 +1,6 @@
 #include "trie.h"
 #include "common.h"
-#include "list.h"
+#include "stack.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@ struct trie_t {
 
 struct trie_enumerator_t {
   trie_t *current;
-  list_t *stack;
+  stack_t *stack;
 };
 
 trie_t *new_trie() {
@@ -57,7 +57,7 @@ void *trie_get(trie_t *trie, const char *key) {
 }
 
 void trie_remove(trie_t *trie, const char *key) {
-  CLEANUP(free_list_ptr) list_t *path = new_list();
+  CLEANUP(free_stack_ptr) stack_t *path = new_stack();
 
   while (*key != '\0') {
     for (int i = 0; i < 8; ++i) {
@@ -66,14 +66,14 @@ void trie_remove(trie_t *trie, const char *key) {
         return;
       }
       trie = trie->children[bit];
-      list_add(path, trie);
+      stack_add(path, trie);
     }
     ++key;
   }
 
-  list_node_t *node = list_head(path);
+  stack_node_t *node = stack_head(path);
   while (node != NULL) {
-    trie_t *parent = list_data(node);
+    trie_t *parent = stack_data(node);
     if (trie == parent->children[0] && parent->children[1] != NULL) {
       free_trie_ptr(&parent->children[0]);
       return;
@@ -82,7 +82,7 @@ void trie_remove(trie_t *trie, const char *key) {
       return;
     } else {
       trie = parent;
-      node = list_next(node);
+      node = stack_next(node);
     }
   }
 
@@ -105,7 +105,7 @@ void free_trie(trie_t *trie) {
 trie_enumerator_t *trie_enumerate_start(trie_t *trie) {
   trie_enumerator_t *enumerator = malloc(sizeof(trie_enumerator_t));
   enumerator->current = trie;
-  enumerator->stack = new_list();
+  enumerator->stack = new_stack();
 
   if (!trie_enumerator_has_value(enumerator)) {
     trie_enumerator_next(enumerator);
@@ -120,7 +120,7 @@ int trie_enumerator_has_value(trie_enumerator_t *enumerator) {
 
 void trie_enumerator_next(trie_enumerator_t *enumerator) {
   if (enumerator->current->children[0] != NULL) {
-    list_add(enumerator->stack, enumerator->current);
+    stack_add(enumerator->stack, enumerator->current);
     enumerator->current = enumerator->current->children[0];
     if (trie_enumerator_has_value(enumerator)) {
       return;
@@ -128,7 +128,7 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
     trie_enumerator_next(enumerator);
     return;
   } else if (enumerator->current->children[1] != NULL) {
-    list_add(enumerator->stack, enumerator->current);
+    stack_add(enumerator->stack, enumerator->current);
     enumerator->current = enumerator->current->children[1];
     if (trie_enumerator_has_value(enumerator)) {
       return;
@@ -136,9 +136,9 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
     trie_enumerator_next(enumerator);
     return;
   } else {
-    list_node_t *node = list_head(enumerator->stack);
+    stack_node_t *node = stack_head(enumerator->stack);
     while (node != NULL) {
-      trie_t *parent = list_data(node);
+      trie_t *parent = stack_data(node);
       if (enumerator->current == parent->children[0] &&
           parent->children[1] != NULL) {
         enumerator->current = parent->children[1];
@@ -149,8 +149,8 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
         return;
       } else {
         enumerator->current = parent;
-        list_node_t *next = list_next(node);
-        list_remove(enumerator->stack, node);
+        stack_node_t *next = stack_next(node);
+        stack_remove(enumerator->stack, node);
         node = next;
       }
     }
@@ -160,23 +160,23 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
 }
 
 void free_trie_enumerator(trie_enumerator_t *enumerator) {
-  free_list(enumerator->stack);
+  free_stack(enumerator->stack);
   free(enumerator);
 }
 
 char *trie_enumerator_get_key(trie_enumerator_t *enumerator) {
-  size_t stack_size = list_size(enumerator->stack);
-  assert((stack_size & 7) == 0);
+  size_t path_len = stack_size(enumerator->stack);
+  assert((path_len & 7) == 0);
 
-  size_t size = stack_size >> 3;
+  size_t size = path_len >> 3;
   char *key = malloc(size + 1);
   key[size] = '\0';
 
-  size_t current = stack_size - 1;
-  list_node_t *parent = list_head(enumerator->stack);
+  size_t current = path_len - 1;
+  stack_node_t *parent = stack_head(enumerator->stack);
   trie_t *child = enumerator->current;
   while (parent != NULL) {
-    trie_t *parent_node = list_data(parent);
+    trie_t *parent_node = stack_data(parent);
 
     if (child == parent_node->children[1]) {
       key[current >> 3] >>= 1;
@@ -188,7 +188,7 @@ char *trie_enumerator_get_key(trie_enumerator_t *enumerator) {
     --current;
 
     child = parent_node;
-    parent = list_next(parent);
+    parent = stack_next(parent);
   }
 
   return key;

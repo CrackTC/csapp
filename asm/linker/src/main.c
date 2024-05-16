@@ -2,7 +2,7 @@
 #include "elf_parse.h"
 #include "linker/elf_info.h"
 #include "linker/linker.h"
-#include "list.h"
+#include "stack.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +15,7 @@ const char **read_all_lines(const char *filename, size_t *n) {
     return NULL;
   }
 
-  CLEANUP(free_list_ptr) list_t *list = new_list();
+  CLEANUP(free_stack_ptr) stack_t *stack = new_stack();
   while (!feof(file)) {
     char *line = NULL;
     size_t len = 0;
@@ -26,13 +26,13 @@ const char **read_all_lines(const char *filename, size_t *n) {
     }
 
     line[read - 1] = '\0';
-    list_add(list, line);
+    stack_add(stack, line);
   }
 
-  *n = list_size(list);
+  *n = stack_size(stack);
   const char **lines = malloc(*n * sizeof(char *));
   int i = *n - 1;
-  LIST_FOR(list, node) { lines[i--] = list_data(node); }
+  STACK_FOR(stack, node) { lines[i--] = stack_data(node); }
 
   fclose(file);
   return lines;
@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
     elfs[i] = malloc(sizeof(elf_t));
   }
 
-  CLEANUP(free_list_ptr) list_t *lines_list = new_list();
-  CLEANUP(free_list_ptr) list_t *lines_count_list = new_list();
+  CLEANUP(free_stack_ptr) stack_t *lines_stack = new_stack();
+  CLEANUP(free_stack_ptr) stack_t *lines_count_stack = new_stack();
 
   for (int i = 0; i < argc - 2; ++i) {
     size_t *pn = malloc(sizeof(size_t));
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    list_add(lines_list, lines);
-    list_add(lines_count_list, pn);
+    stack_add(lines_stack, lines);
+    stack_add(lines_count_stack, pn);
   }
 
   elf_t *output = malloc(sizeof(elf_t));
@@ -91,10 +91,10 @@ int main(int argc, char *argv[]) {
   }
   free(elfs);
 
-  list_node_t *count_node = list_head(lines_count_list);
-  LIST_FOR(lines_list, node) {
-    size_t *pn = list_data(count_node);
-    char **lines = list_data(node);
+  stack_node_t *count_node = stack_head(lines_count_stack);
+  STACK_FOR(lines_stack, node) {
+    size_t *pn = stack_data(count_node);
+    char **lines = stack_data(node);
 
     for (size_t i = 0; i < *pn; ++i) {
       free(lines[i]);
@@ -102,6 +102,6 @@ int main(int argc, char *argv[]) {
     free(lines);
     free(pn);
 
-    count_node = list_next(count_node);
+    count_node = stack_next(count_node);
   }
 }

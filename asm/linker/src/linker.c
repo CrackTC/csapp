@@ -1,7 +1,7 @@
 #include "linker/linker.h"
 #include "common.h"
 #include "linker/elf_info.h"
-#include "list.h"
+#include "stack.h"
 #include "trie.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@ typedef struct {
 } symbol_ref_t;
 
 typedef struct {
-  list_t *locals;
+  stack_t *locals;
   symbol_ref_t *global;
 } trie_entry_t;
 
@@ -52,11 +52,11 @@ static inline symbol_ref_t *new_symbol_ref(elf_t *elf, symbol_t *sym) {
 static inline trie_entry_t *new_trie_entry() {
   trie_entry_t *entry = malloc(sizeof(trie_entry_t));
   *entry = (trie_entry_t){0};
-  entry->locals = new_list();
+  entry->locals = new_stack();
   return entry;
 }
 
-int resolve_syms(elf_t **srcs, size_t n, list_t **res) {
+int resolve_syms(elf_t **srcs, size_t n, stack_t **res) {
   CLEANUP(free_trie_ptr) trie_t *name2ent = new_trie();
 
   for (size_t i = 0; i < n; ++i) {
@@ -73,7 +73,7 @@ int resolve_syms(elf_t **srcs, size_t n, list_t **res) {
       switch (cur_sym->binding) {
       case STB_LOCAL:
         /* add local symbol with confidence */
-        list_add(prev_syms->locals, new_symbol_ref(src, cur_sym));
+        stack_add(prev_syms->locals, new_symbol_ref(src, cur_sym));
         break;
       case STB_WEAK:
       case STB_GLOBAL:
@@ -111,25 +111,25 @@ int resolve_syms(elf_t **srcs, size_t n, list_t **res) {
     }
   }
 
-  *res = new_list();
+  *res = new_stack();
 
   /* iterate the trie and collect the result */
   TRIE_FOR(name2ent, enumerator) {
     trie_entry_t *entry = trie_enumerator_get_value(enumerator);
 
-    list_add(*res, entry->global);
-    LIST_FOR(entry->locals, node) { list_add(*res, list_data(node)); }
+    stack_add(*res, entry->global);
+    STACK_FOR(entry->locals, node) { stack_add(*res, stack_data(node)); }
 
-    free_list(entry->locals);
+    free_stack(entry->locals);
     free(entry);
   }
 
   return 0;
 }
 
-static inline int check_undefined(list_t *syms) {
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+static inline int check_undefined(stack_t *syms) {
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
     if (ref->sym->type == STT_NOTYPE) {
       fprintf(stderr, "symbol %s is undefined\n", ref->sym->name);
       return -1;
@@ -138,9 +138,9 @@ static inline int check_undefined(list_t *syms) {
   return 0;
 }
 
-static inline void resolve_common(list_t *syms) {
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+static inline void resolve_common(stack_t *syms) {
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
     if (ref->sym->section == SEC_COM) {
       ref->sym->section = SEC_BSS;
     }
@@ -149,9 +149,9 @@ static inline void resolve_common(list_t *syms) {
 
 /* we allocate a new symbol_t to avoid modifying the original one, which
  * may be used by original ELF */
-static inline void dup_syms(list_t *syms) {
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+static inline void dup_syms(stack_t *syms) {
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
 
     symbol_t *new_sym = malloc(sizeof(symbol_t));
     *new_sym = *ref->sym;
@@ -169,15 +169,15 @@ static inline char **sym_lines_start(symbol_ref_t *ref) {
   return ref->elf->lines + section_start + ref->sym->value;
 }
 
-static inline void alloc_elf(list_t *syms, elf_t *dst) {
+static inline void alloc_elf(stack_t *syms, elf_t *dst) {
   CLEANUP(free_trie_ptr) trie_t *sec2size = new_trie();
 
   uint64_t section_count = 1; /* reserved for symbol table */
   uint64_t bss_offset = 0;    /* only one bss section */
 
   /* calculate the size of each section and modify the symbol value address */
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
     if (ref->sym->section < 0) { /* not statically alloced */
       if (ref->sym->section == SEC_BSS) {
         if (bss_offset == 0) {
@@ -235,7 +235,7 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
   }
 
   /* symtab section */
-  dst->symbol_count = list_size(syms);
+  dst->symbol_count = stack_size(syms);
   dst->symbols = malloc(sizeof(symbol_t) * dst->symbol_count);
   dst->sections[current] = (section_t){
       .name = strdup(".symtab"),
@@ -252,8 +252,8 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
 
   /* relocate the symbols */
   current = 0;
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
     if (ref->sym->section < 0) {
       /* not statically alloced, just change the value address */
       dst->symbols[current++] = (symbol_t){
@@ -288,21 +288,21 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
   }
 }
 
-static inline void free_syms(list_t *syms) {
-  LIST_FOR(syms, node) {
-    symbol_ref_t *ref = list_data(node);
+static inline void free_syms(stack_t *syms) {
+  STACK_FOR(syms, node) {
+    symbol_ref_t *ref = stack_data(node);
     free(ref->sym->name);
     free(ref->sym);
     free(ref);
   }
 
-  free_list(syms);
+  free_stack(syms);
 }
 
 int link_executable(elf_t **srcs, size_t n, elf_t *dst) {
   *dst = (elf_t){0};
 
-  list_t *syms = NULL;
+  stack_t *syms = NULL;
   if (resolve_syms(srcs, n, &syms) != 0) {
     fprintf(stderr, "failed to resolve symbols\n");
     return -1;
