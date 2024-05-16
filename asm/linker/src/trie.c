@@ -1,6 +1,7 @@
 #include "trie.h"
 #include "common.h"
 #include "list.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -162,6 +163,37 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
 void free_trie_enumerator(trie_enumerator_t *enumerator) {
   free_list(enumerator->stack);
   free(enumerator);
+}
+
+char *trie_enumerator_get_key(trie_enumerator_t *enumerator) {
+  size_t stack_size = list_size(enumerator->stack);
+  fprintf(stderr, "stack_size: %zu\n", stack_size);
+  assert((stack_size & 7) == 0);
+
+  size_t size = stack_size >> 3;
+  char *key = malloc(size + 1);
+  key[size] = '\0';
+
+  size_t current = stack_size - 1;
+  list_node_t *parent = list_head(enumerator->stack);
+  trie_t *child = enumerator->current;
+  while (parent != NULL) {
+    trie_t *parent_node = list_data(parent);
+
+    if (child == parent_node->children[1]) {
+      key[current >> 3] >>= 1;
+      key[current >> 3] |= 0b10000000;
+    } else {
+      key[current >> 3] >>= 1;
+      key[current >> 3] &= 0b01111111;
+    }
+    --current;
+
+    child = parent_node;
+    parent = list_next(parent);
+  }
+
+  return key;
 }
 
 void *trie_enumerator_get_value(trie_enumerator_t *enumerator) {

@@ -11,6 +11,7 @@ void trie_remove(trie_t *trie, const char *key);
 void free_trie(trie_t *trie);
 trie_enumerator_t *trie_enumerate_start(trie_t *trie);
 int trie_enumerator_has_value(trie_enumerator_t *enumerator);
+char *trie_enumerator_get_key(trie_enumerator_t *enumerator);
 void *trie_enumerator_get_value(trie_enumerator_t *enumerator);
 void trie_enumerator_next(trie_enumerator_t *enumerator);
 void free_trie_enumerator(trie_enumerator_t *enumerator);

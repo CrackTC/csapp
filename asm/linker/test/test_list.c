@@ -14,6 +14,8 @@ int main() {
     list_add(list, data);
   }
 
+  assert(list_size(list) == 10);
+
   list_node_t *node = list_head(list);
   int i = 9;
   while (node != NULL) {
@@ -40,6 +42,8 @@ int main() {
       node = list_next(node);
     }
   }
+
+  assert(list_size(list) == 5);
 
   node = list_head(list);
   i = 8;
