@@ -1,6 +1,8 @@
 #ifndef TRIE_H
 #define TRIE_H
 
+#include "common.h"
+
 typedef struct trie_t trie_t;
 typedef struct trie_enumerator_t trie_enumerator_t;
 
@@ -17,5 +19,11 @@ void trie_enumerator_next(trie_enumerator_t *enumerator);
 void free_trie_enumerator(trie_enumerator_t *enumerator);
 void free_trie_ptr(trie_t **trie);
 void free_trie_enumerator_ptr(trie_enumerator_t **trie_enumerator);
+
+#define TRIE_FOR(trie, enumerator)                                             \
+  for (CLEANUP(free_trie_enumerator_ptr)                                       \
+           trie_enumerator_t *enumerator = trie_enumerate_start(trie);         \
+       trie_enumerator_has_value(enumerator);                                  \
+       trie_enumerator_next(enumerator))
 
 #endif // TRIE_H
