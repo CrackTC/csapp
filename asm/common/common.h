@@ -3,6 +3,8 @@
 
 #define DEFINE_CLEANUP_FUNC(T)                                                 \
   void free_##T##_ptr(T##_t **(T)) {                                           \
+    if ((T) == NULL)                                                           \
+      return;                                                                  \
     free_##T(*(T));                                                            \
     *(T) = (void *)0;                                                          \
   }
