@@ -46,7 +46,7 @@ typedef struct {
   uint64_t section_count;
   symbol_t *symbols;
   uint64_t symbol_count;
-  const char **lines; /* elf_t owns the pointer but not the strings */
+  char **lines; /* elf_t owns the pointer but not the strings */
 } elf_t;
 
 #endif // ELF_INFO_H

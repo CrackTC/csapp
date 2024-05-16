@@ -187,7 +187,9 @@ static parse_node_t *not_parser_parse(const parse_parser_t *this,
 
   parse_node_t *child_node = parser_parse(single_parser, input);
   if (child_node == NULL) {
-    return new_parse_node(this, input);
+    parse_node_t *node = new_parse_node(this, input);
+    node->end_ref = input + 1;
+    return node;
   }
 
   free_parse_node(child_node);
@@ -369,6 +371,5 @@ int64_t parse_number(parse_node_t *node) {
 }
 
 char *parse_string(parse_node_t *node) {
-  return strndup(node->children[0]->start_ref,
-                 node->children[0]->end_ref - node->children[0]->start_ref);
+  return strndup(node->start_ref, node->end_ref - node->start_ref);
 }

@@ -139,7 +139,6 @@ void trie_enumerator_next(trie_enumerator_t *enumerator) {
     list_node_t *node = list_head(enumerator->stack);
     while (node != NULL) {
       trie_t *parent = list_data(node);
-      fprintf(stderr, "parent: %p\n", parent);
       if (enumerator->current == parent->children[0] &&
           parent->children[1] != NULL) {
         enumerator->current = parent->children[1];
@@ -167,7 +166,6 @@ void free_trie_enumerator(trie_enumerator_t *enumerator) {
 
 char *trie_enumerator_get_key(trie_enumerator_t *enumerator) {
   size_t stack_size = list_size(enumerator->stack);
-  fprintf(stderr, "stack_size: %zu\n", stack_size);
   assert((stack_size & 7) == 0);
 
   size_t size = stack_size >> 3;

@@ -164,7 +164,7 @@ static inline const char *sym_section_name(symbol_ref_t *ref) {
   return ref->elf->sections[ref->sym->section].name;
 }
 
-static inline const char **sym_lines_start(symbol_ref_t *ref) {
+static inline char **sym_lines_start(symbol_ref_t *ref) {
   uint64_t section_start = ref->elf->sections[ref->sym->section].offset;
   return ref->elf->lines + section_start + ref->sym->value;
 }
@@ -172,8 +172,8 @@ static inline const char **sym_lines_start(symbol_ref_t *ref) {
 static inline void alloc_elf(list_t *syms, elf_t *dst) {
   CLEANUP(free_trie_ptr) trie_t *sec2size = new_trie();
 
-  uint64_t section_count = 0;
-  uint64_t bss_offset = 0; /* only one bss section */
+  uint64_t section_count = 1; /* reserved for symbol table */
+  uint64_t bss_offset = 0;    /* only one bss section */
 
   /* calculate the size of each section and modify the symbol value address */
   LIST_FOR(syms, node) {
@@ -206,6 +206,9 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
   }
 
   /* alloc the elf */
+  dst->section_count = section_count;
+  dst->sections = malloc(sizeof(section_t) * section_count);
+
   size_t current = bss_offset == 0 ? 0 : 1;
   if (bss_offset != 0) { /* bss section */
     dst->sections[0] = (section_t){
@@ -230,13 +233,25 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
     };
     start += size;
   }
+
+  /* symtab section */
+  dst->symbol_count = list_size(syms);
+  dst->symbols = malloc(sizeof(symbol_t) * dst->symbol_count);
+  dst->sections[current] = (section_t){
+      .name = strdup(".symtab"),
+      .address = 0,
+      .offset = start,
+      .size = dst->symbol_count,
+  };
+  start += dst->symbol_count;
+
+  /* elf header info */
   dst->header.section_table_start = start;
   dst->header.line_count = start + section_count;
   dst->lines = malloc(sizeof(char *) * dst->header.line_count);
 
+  /* relocate the symbols */
   current = 0;
-  dst->symbol_count = list_size(syms);
-  dst->symbols = malloc(sizeof(symbol_t) * dst->symbol_count);
   LIST_FOR(syms, node) {
     symbol_ref_t *ref = list_data(node);
     if (ref->sym->section < 0) {
@@ -268,9 +283,6 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
            ref->sym->size * sizeof(char *));
   }
 
-  dst->section_count = section_count;
-  dst->sections = malloc(sizeof(section_t) * section_count);
-
   TRIE_FOR(sec2size, enumerator) {
     free(trie_enumerator_get_value(enumerator));
   }
@@ -292,9 +304,11 @@ int link_executable(elf_t **srcs, size_t n, elf_t *dst) {
 
   list_t *syms = NULL;
   if (resolve_syms(srcs, n, &syms) != 0) {
+    fprintf(stderr, "failed to resolve symbols\n");
     return -1;
   }
   if (check_undefined(syms) != 0) {
+    fprintf(stderr, "undefined symbols\n");
     return -1;
   }
   dup_syms(syms);
