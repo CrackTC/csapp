@@ -1,4 +1,4 @@
-ELF: ?, 25
+ELF: 27, 25
 push   %rbp
 mov    %rsp,%rbp
 mov    %rdi,-0x18(%rbp)

@@ -16,23 +16,24 @@ typedef enum {
 } symbol_type_t;
 
 typedef struct {
-  const char *name;
+  const char *name; /* section_t owns the string */
   uint64_t address;
   uint64_t offset;
   uint64_t size; /* here size means line count */
-} section_header_t;
+} section_t;
 
 typedef struct {
-  const char *name;
+  const char *name; /* symbol_t owns the string */
   symbol_binding_t binding;
   symbol_type_t type;
-  int16_t section; /* -1: COM, -2: UND */
+  int16_t section; /* -1: COM, -2: UND, -3: BSS */
   uint64_t value;  /* offset(lines) from section start */
   uint64_t size;   /* line count */
 } symbol_t;
 
 #define SEC_COM -1
 #define SEC_UND -2
+#define SEC_BSS -3
 
 typedef struct {
   uint64_t line_count;
@@ -41,9 +42,11 @@ typedef struct {
 
 typedef struct {
   elf_header_t header;
-  section_header_t *section_headers;
+  section_t *sections;
+  uint64_t section_count;
   symbol_t *symbols;
   uint64_t symbol_count;
-} elf_info_t;
+  const char **lines; /* elf_t owns the pointer but not the strings */
+} elf_t;
 
 #endif // ELF_INFO_H

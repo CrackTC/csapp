@@ -1,9 +1,11 @@
 #include "common.h"
+#include "elf_parse.h"
 #include "linker/elf_info.h"
 #include "parse/node.h"
 #include "parse/parser.h"
 #include "parse/parsers.h"
 #include "parse/trivial.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,8 +71,8 @@ static parse_parser_t *section_header_parser() {
   return parser;
 }
 
-int parse_section_header(const char *line, section_header_t *header) {
-  *header = (section_header_t){0};
+int parse_section_header(const char *line, section_t *header) {
+  *header = (section_t){0};
   parse_parser_t *parser = section_header_parser(); /* no need to free */
 
   CLEANUP(free_parse_node_ptr)
@@ -138,31 +140,39 @@ int parse_symbol_entry(const char *line, symbol_t *entry) {
   return 0;
 }
 
-int parse_elf(const char **lines, elf_info_t *info) {
-  *info = (elf_info_t){0};
-  if (parse_elf_header(lines[0], &info->header) != 0) {
+int parse_elf(const char **lines, elf_t *elf) {
+  *elf = (elf_t){0};
+
+  if (parse_elf_header(lines[0], &elf->header) != 0) {
+    fprintf(stderr, "Failed to parse ELF header\n");
     return -1;
   }
 
-  size_t section_count =
-      info->header.line_count - info->header.section_table_start;
-  info->section_headers = malloc(sizeof(section_header_t) * section_count);
+  elf->lines = malloc(sizeof(char *) * elf->header.line_count);
+  memcpy(elf->lines, lines, sizeof(char *) * elf->header.line_count);
+
+  uint64_t section_count =
+      elf->header.line_count - elf->header.section_table_start;
+  elf->section_count = section_count;
+  elf->sections = malloc(sizeof(section_t) * section_count);
 
   size_t i;
-  for (i = info->header.section_table_start; i < info->header.line_count; ++i) {
-    if (parse_section_header(lines[i], &info->section_headers[i]) != 0) {
+  for (i = elf->header.section_table_start; i < elf->header.line_count; ++i) {
+    if (parse_section_header(lines[i], &elf->sections[i]) != 0) {
+      fprintf(stderr, "Failed to parse section header\n");
       return -1;
     }
   }
 
   // find the symbol table
   for (i = 0; i < section_count; ++i) {
-    if (strcmp(info->section_headers[i].name, ".symtab") == 0) {
-      info->symbol_count = info->section_headers[i].size;
-      info->symbols = malloc(sizeof(symbol_t) * info->symbol_count);
-      for (size_t j = 0; j < info->symbol_count; ++j) {
-        if (parse_symbol_entry(lines[info->section_headers[i].offset + j],
-                               &info->symbols[j]) != 0) {
+    if (strcmp(elf->sections[i].name, ".symtab") == 0) {
+      elf->symbol_count = elf->sections[i].size;
+      elf->symbols = malloc(sizeof(symbol_t) * elf->symbol_count);
+      for (size_t j = 0; j < elf->symbol_count; ++j) {
+        if (parse_symbol_entry(lines[elf->sections[i].offset + j],
+                               &elf->symbols[j]) != 0) {
+          fprintf(stderr, "Failed to parse symbol entry\n");
           return -1;
         }
       }
@@ -171,6 +181,7 @@ int parse_elf(const char **lines, elf_info_t *info) {
   }
 
   if (i == section_count) {
+    fprintf(stderr, "No symbol table found\n");
     return -1;
   }
 
