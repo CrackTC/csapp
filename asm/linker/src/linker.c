@@ -205,8 +205,17 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
     *poff += ref->sym->size;
   }
 
-  /* [TODO) alloc the sections */
-  size_t current = 0;
+  /* alloc the elf */
+  size_t current = bss_offset == 0 ? 0 : 1;
+  if (bss_offset != 0) { /* bss section */
+    dst->sections[0] = (section_t){
+        .name = strdup(".bss"),
+        .address = 0,
+        .offset = 0,
+        .size = bss_offset,
+    };
+  }
+
   uint64_t start = 1;
   TRIE_FOR(sec2size, enumerator) {
     char *sec_name = trie_enumerator_get_key(enumerator);
@@ -230,8 +239,8 @@ static inline void alloc_elf(list_t *syms, elf_t *dst) {
   dst->symbols = malloc(sizeof(symbol_t) * dst->symbol_count);
   LIST_FOR(syms, node) {
     symbol_ref_t *ref = list_data(node);
-    if (ref->sym->section <
-        0) { /* not statically alloced, just change the value address */
+    if (ref->sym->section < 0) {
+      /* not statically alloced, just change the value address */
       dst->symbols[current++] = (symbol_t){
           .name = strdup(ref->sym->name),
           .binding = ref->sym->binding,
