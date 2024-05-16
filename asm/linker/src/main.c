@@ -85,30 +85,11 @@ int main(int argc, char *argv[]) {
   fclose(file);
   fprintf(stderr, "output written to %s\n", argv[1]);
 
-  for (size_t j = 0; j < output->section_count; ++j) {
-    free(output->sections[j].name);
-  }
-  free(output->sections);
-  for (size_t j = 0; j < output->symbol_count; ++j) {
-    free(output->symbols[j].name);
-  }
-  free(output->symbols);
-  free(output->lines);
-  free(output);
-
+  free_elf_t(output);
   for (size_t i = 0; i < argc - 2; ++i) {
-    for (size_t j = 0; j < elfs[i]->section_count; ++j) {
-      free(elfs[i]->sections[j].name);
-    }
-    free(elfs[i]->sections);
-
-    for (size_t j = 0; j < elfs[i]->symbol_count; ++j) {
-      free(elfs[i]->symbols[j].name);
-    }
-    free(elfs[i]->symbols);
-    free(elfs[i]->lines);
-    free(elfs[i]);
+    free_elf_t(elfs[i]);
   }
+  free(elfs);
 
   list_node_t *count_node = list_head(lines_count_list);
   LIST_FOR(lines_list, node) {
@@ -123,6 +104,4 @@ int main(int argc, char *argv[]) {
 
     count_node = list_next(count_node);
   }
-
-  free(elfs);
 }

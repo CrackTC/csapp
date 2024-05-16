@@ -2,6 +2,7 @@
 #define ELF_INFO_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef enum {
   STB_LOCAL = 0,
@@ -48,5 +49,18 @@ typedef struct {
   uint64_t symbol_count;
   char **lines; /* elf_t owns the pointer but not the strings */
 } elf_t;
+
+static inline void free_elf_t(elf_t *elf) {
+  for (uint64_t i = 0; i < elf->section_count; i++) {
+    free(elf->sections[i].name);
+  }
+  free(elf->sections);
+  for (uint64_t i = 0; i < elf->symbol_count; i++) {
+    free(elf->symbols[i].name);
+  }
+  free(elf->symbols);
+  free(elf->lines);
+  free(elf);
+}
 
 #endif // ELF_INFO_H
