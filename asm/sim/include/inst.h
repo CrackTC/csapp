@@ -13,6 +13,7 @@
   MACRO(__VA_ARGS__, JMP)                                                      \
   MACRO(__VA_ARGS__, JMPR)                                                     \
   MACRO(__VA_ARGS__, JNE)                                                      \
+  MACRO(__VA_ARGS__, JNER)                                                     \
   MACRO(__VA_ARGS__, MOV)                                                      \
   MACRO(__VA_ARGS__, MOVL)                                                     \
   MACRO(__VA_ARGS__, MOVQ)                                                     \

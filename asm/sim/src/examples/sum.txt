@@ -17,9 +17,9 @@ mov    %rsp,%rbp
 sub    $0x20,%rsp
 mov    %rdi,-0x10(%rbp)
 cmpq   $0x0,-0x10(%rbp)
-jne    $0x004000a0
+jner   $0x10
 movq   $0x0,-0x8(%rbp)
-jmp    $0x004000e8
+jmpr   $0x48
 mov    -0x10(%rbp),%rax
 mov    %rax,-0x18(%rbp)
 mov    -0x10(%rbp),%rdi

@@ -131,6 +131,15 @@ static void handler_jne(executor_t *executor, void *src, void *dst,
   executor->reg_ref->rip = *(uint64_t *)src;
 }
 
+static void handler_jner(executor_t *executor, void *src, void *dst,
+                         uint64_t mask) {
+  (void)dst, (void)mask;
+  if (executor->flags_ref->zf) {
+    return;
+  }
+  executor->reg_ref->rip += *(uint64_t *)src;
+}
+
 static void handler_jmp(executor_t *executor, void *src, void *dst,
                         uint64_t mask) {
   (void)dst, (void)mask;
@@ -140,7 +149,7 @@ static void handler_jmp(executor_t *executor, void *src, void *dst,
 static void handler_jmpr(executor_t *executor, void *src, void *dst,
                          uint64_t mask) {
   (void)dst, (void)mask;
-  executor->reg_ref->rip += *(uint64_t *)src * sizeof(uint64_t);
+  executor->reg_ref->rip += *(uint64_t *)src;
 }
 
 static void handler_xor(executor_t *executor, void *src, void *dst,
@@ -176,11 +185,11 @@ typedef void (*handler_t)(executor_t *executor, void *src, void *dst,
 
 const handler_t handlers[] = {
     [ADD] = handler_add,   [CALL] = handler_call, [CMPQ] = handler_cmpq,
-    [JNE] = handler_jne,   [JMP] = handler_jmp,   [JMPR] = handler_jmpr,
-    [MOVL] = handler_movl, [MOVQ] = handler_movq, [MOV] = handler_mov,
-    [NOP] = handler_nop,   [POP] = handler_pop,   [PUSH] = handler_push,
-    [RET] = handler_ret,   [SUB] = handler_sub,   [XOR] = handler_xor,
-    [DBG] = handler_dbg,
+    [JMP] = handler_jmp,   [JMPR] = handler_jmpr, [JNE] = handler_jne,
+    [JNER] = handler_jner, [MOVL] = handler_movl, [MOVQ] = handler_movq,
+    [MOV] = handler_mov,   [NOP] = handler_nop,   [POP] = handler_pop,
+    [PUSH] = handler_push, [RET] = handler_ret,   [SUB] = handler_sub,
+    [XOR] = handler_xor,   [DBG] = handler_dbg,
 };
 
 void executor_exec(executor_t *executor, op_t opr, void *src, void *dst,
