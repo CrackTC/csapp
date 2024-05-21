@@ -1,4 +1,4 @@
-ELF: 27, 25
+ELF: 29, 26
 push   %rbp
 mov    %rsp,%rbp
 mov    %rdi,-0x18(%rbp)
@@ -21,7 +21,9 @@ mov    -0x10(%rbp),%rax
 add    %rdx,%rax
 pop    %rbp
 ret
+0,17,1
 sum,2,2,0,0,22
 bias,2,1,-1,8,8
 .text,0,1,22
-.symtab,0,23,2
+.rel,0,23,1
+.symtab,0,24,2

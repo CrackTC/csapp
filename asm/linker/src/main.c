@@ -49,12 +49,9 @@ int main(int argc, char *argv[]) {
     elfs[i] = malloc(sizeof(elf_t));
   }
 
-  CLEANUP(free_stack_ptr) stack_t *lines_stack = new_stack();
-  CLEANUP(free_stack_ptr) stack_t *lines_count_stack = new_stack();
-
   for (int i = 0; i < argc - 2; ++i) {
-    size_t *pn = malloc(sizeof(size_t));
-    const char **lines = read_all_lines(argv[i + 2], pn);
+    size_t n;
+    const char **lines = read_all_lines(argv[i + 2], &n);
     if (lines == NULL) {
       printf("Failed to read file: %s\n", argv[i + 2]);
       return 1;
@@ -65,8 +62,10 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    stack_add(lines_stack, lines);
-    stack_add(lines_count_stack, pn);
+    for (size_t l = 0; l < n; ++l) {
+      free((char *)lines[l]);
+    }
+    free(lines);
   }
 
   elf_t *output = malloc(sizeof(elf_t));
@@ -90,18 +89,4 @@ int main(int argc, char *argv[]) {
     free_elf_t(elfs[i]);
   }
   free(elfs);
-
-  stack_node_t *count_node = stack_head(lines_count_stack);
-  STACK_FOR(lines_stack, node) {
-    size_t *pn = stack_data(count_node);
-    char **lines = stack_data(node);
-
-    for (size_t i = 0; i < *pn; ++i) {
-      free(lines[i]);
-    }
-    free(lines);
-    free(pn);
-
-    count_node = stack_next(count_node);
-  }
 }

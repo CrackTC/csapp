@@ -5,16 +5,17 @@
 
 void write_elf(elf_t *elf, FILE *stream) {
   /* write elf header */
-  fprintf(stream, "ELF: %lu %lu\n", elf->header.line_count,
-          elf->header.section_table_start);
+  fprintf(stream, "ELF: %lu, %lu\n", elf->hdr.lcnt, elf->hdr.shtoff);
 
   /* write sections */
   size_t current_line = 1;
-  for (size_t i = 0; i < elf->section_count - 1; ++i) {
-    section_t *section = &elf->sections[i];
+  for (size_t i = 0; i < elf->seccnt; ++i) {
+    section_t *section = &elf->secs[i];
 
-    /* skip .bss section */
-    if (strcmp(section->name, ".bss") == 0)
+    /* skip .bss, .rel, .symtab section */
+    if (strcmp(section->name, ".bss") == 0 ||
+        strcmp(section->name, ".rel") == 0 ||
+        strcmp(section->name, ".symtab") == 0)
       continue;
 
     for (size_t j = 0; j < section->size; ++j, ++current_line) {
@@ -22,16 +23,24 @@ void write_elf(elf_t *elf, FILE *stream) {
     }
   }
 
-  /* write symtab */
-  for (size_t i = 0; i < elf->symbol_count; ++i) {
-    symbol_t *sym = &elf->symbols[i];
-    fprintf(stream, "%s,%u,%u,%hd,%lu,%lu\n", sym->name, sym->binding,
-            sym->type, sym->section, sym->value, sym->size);
+  /* write rel */
+  for (size_t i = 0; i < elf->relcnt; ++i) {
+    rel_t *rel = &elf->rels[i];
+    fprintf(stream, "0x%lx,0x%lx,0x%lx\n", rel->src_sym_idx, rel->src_off,
+            rel->dst_sym_idx);
   }
 
-  for (size_t i = 0; i < elf->section_count; ++i) {
-    section_t *section = &elf->sections[i];
-    fprintf(stream, "%s,%lu,%lu,%lu\n", section->name, section->address,
-            section->offset, section->size);
+  /* write symtab */
+  for (size_t i = 0; i < elf->symcnt; ++i) {
+    sym_t *sym = &elf->syms[i];
+    fprintf(stream, "%s,0x%x,0x%x,%hd,0x%lx,0x%lx\n", sym->name, sym->binding,
+            sym->type, sym->sec_idx, sym->value, sym->size);
+  }
+
+  /* write section table */
+  for (size_t i = 0; i < elf->seccnt; ++i) {
+    section_t *section = &elf->secs[i];
+    fprintf(stream, "%s,0x%lx,0x%lx,0x%lx\n", section->name, section->addr,
+            section->off, section->size);
   }
 }

@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-int link_objects(elf_t **srcs, size_t n, elf_t *dst, int executable);
+int link_objects(elf_t **srcs, size_t n, elf_t *dst, int exec);
 void write_elf(elf_t *elf, FILE *stream);
 
 #endif // LINKER_H

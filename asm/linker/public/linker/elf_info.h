@@ -18,8 +18,8 @@ typedef enum {
 
 typedef struct {
   char *name; /* section_t owns the string */
-  uint64_t address;
-  uint64_t offset;
+  uint64_t addr;
+  uint64_t off;
   uint64_t size; /* here size means line count */
 } section_t;
 
@@ -27,39 +27,55 @@ typedef struct {
   char *name; /* symbol_t owns the string */
   symbol_binding_t binding;
   symbol_type_t type;
-  int16_t section; /* -1: COM, -2: UND, -3: BSS */
+  int16_t sec_idx; /* -1: COM, -2: UND, -3: BSS */
   uint64_t value;  /* offset(lines) from section start */
   uint64_t size;   /* line count */
-} symbol_t;
+} sym_t;
+
+typedef struct {
+  uint64_t src_sym_idx;
+  uint64_t src_off;
+  uint64_t dst_sym_idx;
+} rel_t;
 
 #define SEC_COM -1
 #define SEC_UND -2
 #define SEC_BSS -3
 
 typedef struct {
-  uint64_t line_count;
-  uint64_t section_table_start; /* offset(lines) from start of file */
+  uint64_t lcnt;
+  uint64_t shtoff; /* offset(lines) from start of file */
 } elf_header_t;
 
 typedef struct {
-  elf_header_t header;
-  section_t *sections;
-  uint64_t section_count;
-  symbol_t *symbols;
-  uint64_t symbol_count;
-  char **lines; /* elf_t owns the pointer but not the strings */
+  elf_header_t hdr;
+  section_t *secs;
+  uint64_t seccnt;
+  sym_t *syms;
+  uint64_t symcnt;
+  rel_t *rels;
+  uint64_t relcnt;
+  char **lines; /* elf_t owns the pointer AND the strings */
 } elf_t;
 
 static inline void free_elf_t(elf_t *elf) {
-  for (uint64_t i = 0; i < elf->section_count; i++) {
-    free(elf->sections[i].name);
+  for (uint64_t sec_idx = 0; sec_idx < elf->seccnt; ++sec_idx) {
+    free(elf->secs[sec_idx].name);
   }
-  free(elf->sections);
-  for (uint64_t i = 0; i < elf->symbol_count; i++) {
-    free(elf->symbols[i].name);
+  free(elf->secs);
+
+  for (uint64_t sym_idx = 0; sym_idx < elf->symcnt; ++sym_idx) {
+    free(elf->syms[sym_idx].name);
   }
-  free(elf->symbols);
+  free(elf->syms);
+
+  free(elf->rels);
+
+  for (uint64_t l = 0; l < elf->hdr.lcnt; ++l) {
+    free(elf->lines[l]);
+  }
   free(elf->lines);
+
   free(elf);
 }
 
