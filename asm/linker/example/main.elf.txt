@@ -1,4 +1,4 @@
-ELF: 64, 61
+ELF: 65, 62
 push   %rbp
 mov    %rsp,%rbp
 mov    $0x5,%esi
@@ -57,6 +57,7 @@ ret
 0x00
 a,2,1,1,0,40
 bias,2,1,1,40,8
+com,2,0,-1,0,8
 main,2,2,0,0,8
 sum,2,0,-2,0,0
 .text,0,1,8

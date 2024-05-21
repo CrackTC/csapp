@@ -299,7 +299,7 @@ static inline void free_syms(stack_t *syms) {
   free_stack(syms);
 }
 
-int link_executable(elf_t **srcs, size_t n, elf_t *dst) {
+int link_objects(elf_t **srcs, size_t n, elf_t *dst, int executable) {
   *dst = (elf_t){0};
 
   stack_t *syms = NULL;
@@ -307,12 +307,18 @@ int link_executable(elf_t **srcs, size_t n, elf_t *dst) {
     fprintf(stderr, "failed to resolve symbols\n");
     return -1;
   }
-  if (check_undefined(syms) != 0) {
+
+  if (executable && check_undefined(syms) != 0) {
     fprintf(stderr, "undefined symbols\n");
     return -1;
   }
+
   dup_syms(syms);
-  resolve_common(syms);
+
+  if (executable) {
+    resolve_common(syms);
+  }
+
   alloc_elf(syms, dst);
 
   free_syms(syms);

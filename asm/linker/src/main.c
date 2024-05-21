@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
   }
 
   elf_t *output = malloc(sizeof(elf_t));
-  if (link_executable(elfs, argc - 2, output) != 0) {
+  if (link_objects(elfs, argc - 2, output, 1) != 0) {
     printf("Failed to link ELF files\n");
     return 1;
   }
