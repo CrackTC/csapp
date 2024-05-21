@@ -1,6 +1,7 @@
 #include "linker/elf_info.h"
 #include "linker/linker.h"
 #include <stdio.h>
+#include <string.h>
 
 void write_elf(elf_t *elf, FILE *stream) {
   /* write elf header */
@@ -11,6 +12,11 @@ void write_elf(elf_t *elf, FILE *stream) {
   size_t current_line = 1;
   for (size_t i = 0; i < elf->section_count - 1; ++i) {
     section_t *section = &elf->sections[i];
+
+    /* skip .bss section */
+    if (strcmp(section->name, ".bss") == 0)
+      continue;
+
     for (size_t j = 0; j < section->size; ++j, ++current_line) {
       fprintf(stream, "%s\n", elf->lines[current_line]);
     }

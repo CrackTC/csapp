@@ -19,7 +19,7 @@ typedef struct {
 } trie_entry_t;
 
 static inline int global_priority(const symbol_t *sym) {
-  if (sym->type == STT_NOTYPE) { /* UND */
+  if (sym->section == SEC_UND) { /* UND */
     return 0;
   }
 
@@ -130,7 +130,7 @@ int resolve_syms(elf_t **srcs, size_t n, stack_t **res) {
 static inline int check_undefined(stack_t *syms) {
   STACK_FOR(syms, node) {
     symbol_ref_t *ref = stack_data(node);
-    if (ref->sym->type == STT_NOTYPE) {
+    if (ref->sym->section == SEC_UND) {
       fprintf(stderr, "symbol %s is undefined\n", ref->sym->name);
       return -1;
     }
@@ -187,7 +187,7 @@ static inline void alloc_elf(stack_t *syms, elf_t *dst) {
         ref->new_value = bss_offset;
         bss_offset += ref->sym->size;
       } else {
-        ref->new_value = 0; /* no need to update the value */
+        ref->new_value = ref->sym->value; /* no need to update the value */
       }
       continue;
     }
