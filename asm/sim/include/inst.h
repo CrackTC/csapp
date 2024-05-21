@@ -10,6 +10,8 @@
   MACRO(__VA_ARGS__, CALL)                                                     \
   MACRO(__VA_ARGS__, CMPQ)                                                     \
   MACRO(__VA_ARGS__, HLT)                                                      \
+  MACRO(__VA_ARGS__, JB)                                                       \
+  MACRO(__VA_ARGS__, JBR)                                                      \
   MACRO(__VA_ARGS__, JMP)                                                      \
   MACRO(__VA_ARGS__, JMPR)                                                     \
   MACRO(__VA_ARGS__, JNE)                                                      \

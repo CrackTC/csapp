@@ -5,7 +5,7 @@ mov    %rdi,-0x18(%rbp)
 mov    %rsi,-0x20(%rbp)
 movq   $0x0,-0x10(%rbp)
 movq   $0x0,-0x8(%rbp)
-jmp    14
+jmpr   $0x38
 mov    -0x8(%rbp),%rax
 lea    0x0(,%rax,8),%rdx
 mov    -0x18(%rbp),%rax
@@ -15,8 +15,8 @@ add    %rax,-0x10(%rbp)
 addq   $0x1,-0x8(%rbp)
 mov    -0x8(%rbp),%rax
 cmp    -0x20(%rbp),%rax
-jb     7
-mov    0x0(%rip),%rdx
+jbr    $-0x50
+mov    <bias>,%rdx
 mov    -0x10(%rbp),%rax
 add    %rdx,%rax
 pop    %rbp
